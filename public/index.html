@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora de Crafting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: lista de itens por categoria à esquerda, painel de totais fixo à direita (empilha em telemóvel) */
+:root {
+  --bg: #eef0ec; --surface: #ffffff; --surface-2: #f5f6f3; --fg: #1c211d; --muted: #5d665f; --line: #d5dad3;
+  --accent: #2f7a4a; --accent-fg: #ffffff;
+  --c-pistol: #4f9fd0; --c-smg: #2f6fae; --c-rifle: #d9774a; --c-mk2: #5e9f3c; --c-extras: #b257a8; --c-kevs: #7d8ca0;
+  --f-display: "Chakra Petch", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121513; --surface: #1b1f1c; --surface-2: #222723; --fg: #e6ebe5; --muted: #9aa49b; --line: #313832;
+  --accent: #5cc283; --accent-fg: #0d1a11; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121513; --surface: #1b1f1c; --surface-2: #222723; --fg: #e6ebe5; --muted: #9aa49b; --line: #313832;
+  --accent: #5cc283; --accent-fg: #0d1a11; color-scheme: dark }
+
+* { box-sizing: border-box; }
+html { color-scheme: light; }
+body { margin: 0; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: 1.9rem; letter-spacing: .02em; margin: 0; text-transform: uppercase; text-wrap: balance; }
+.sub { color: var(--muted); margin: 2px 0 0; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+input[type=search] { font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--fg); width: 220px; max-width: 100%; }
+button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 9px 14px; font-weight: 500; }
+button:hover { border-color: var(--muted); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } .summary { position: static !important; } }
+
+.cat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.cat + .cat { margin-top: 14px; }
+.cat-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-left: 6px solid var(--cat); background: var(--surface-2); }
+.cat-head h2 { font-family: var(--f-display); font-size: 1.05rem; margin: 0; text-transform: uppercase; letter-spacing: .06em; }
+.cat-head .count { margin-left: auto; font-size: .8rem; color: var(--muted); }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; padding: 10px 14px; border-top: 1px solid var(--line); align-items: center; }
+.item.on { background: color-mix(in srgb, var(--cat) 12%, transparent); }
+.item .name { font-weight: 600; }
+.item .guns { color: var(--muted); font-size: .82rem; }
+.item .mats { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.chip { font-size: .75rem; padding: 1px 7px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.item .prices { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.qty { display: flex; align-items: center; gap: 4px; }
+.qty button { width: 34px; height: 34px; padding: 0; font-size: 1.1rem; line-height: 1; }
+.qty input { width: 64px; height: 34px; text-align: center; font: 500 1rem var(--f-mono); border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--fg); -moz-appearance: textfield; }
+.qty input::-webkit-inner-spin-button, .qty input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.summary { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 16px; }
+.summary h3 { font-family: var(--f-display); text-transform: uppercase; letter-spacing: .08em; font-size: .85rem; color: var(--muted); margin: 0 0 6px; }
+.totals { display: grid; gap: 8px; }
+.tot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 10px 12px; border-radius: 6px; background: var(--surface-2); }
+.tot .lbl { font-size: .85rem; color: var(--muted); }
+.tot .val { font: 700 1.35rem var(--f-mono); font-variant-numeric: tabular-nums; }
+.tot.main-tot { background: var(--accent); }
+.tot.main-tot .lbl, .tot.main-tot .val { color: var(--accent-fg); }
+table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+td { padding: 4px 0; border-bottom: 1px dashed var(--line); }
+td.n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); font-size: .88rem; margin: 0; }
+.sel li { display: flex; justify-content: space-between; gap: 8px; }
+.sel ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: .88rem; }
+.sel .n { font-family: var(--f-mono); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.actions button { flex: 1; }
+.toast { font-size: .82rem; color: var(--accent); min-height: 1.2em; margin: 0; }
+.hidden-row { display: none; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Calculadora de Crafting</h1>
+      <p class="sub">Mete as quantidades e vê os materiais e o preço total.</p>
+    </div>
+    <div class="tools">
+      <input type="search" id="search" placeholder="Procurar acessório ou arma…" aria-label="Procurar">
+    </div>
+  </header>
+
+  <div class="main">
+    <div id="list"></div>
+
+    <aside class="summary" aria-live="polite">
+      <div>
+        <h3>Preço total</h3>
+        <div class="totals">
+          <div class="tot"><span class="lbl">Blip</span><span class="val" id="t-blip">0</span></div>
+          <div class="tot"><span class="lbl">Parceria com Blip / Material</span><span class="val" id="t-parc">0</span></div>
+          <div class="tot main-tot"><span class="lbl">Sem material</span><span class="val" id="t-sem">0</span></div>
+        </div>
+      </div>
+      <div>
+        <h3>Materiais necessários</h3>
+        <div id="mats"></div>
+      </div>
+      <div class="sel">
+        <h3>Encomenda</h3>
+        <div id="sel"></div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="copy">Copiar resumo</button>
+        <button id="reset">Limpar tudo</button>
+      </div>
+      <p class="toast" id="toast"></p>
+    </aside>
+  </div>
+</div>
+
+<script>
+const AL = "Alumínio", PL = "Plástico", AC = "Aço", RE = "Resto Eletrónico", FI = "Fibra", PE = "Pele", CO = "Couro", TE = "Tecido";
+const CATS = [
+  { id: "pistol", name: "Pistol", color: "var(--c-pistol)", items: [
+    { n: "Compensador", g: "Fajutas | Revolver", m: { [AL]: 2, [AC]: 2 }, p: [350, 1850, 4350] },
+    { n: "Ext. Clip", g: "Vintage | Fajuta | AP Pistol | Tec 9 | .50", m: { [AL]: 3, [PL]: 3 }, p: [1250, 3750, 8750] },
+    { n: "FlashLight", g: "Fajuta | Revolver | AP Pistol | .50", m: { [RE]: 2 }, p: [500, 1500, 3000] },
+    { n: "Scope", g: "Fajuta", m: { [RE]: 2 }, p: [500, 1500, 3000] },
+    { n: "Supressor", g: "Vintage | Fajuta | AP Pistol | Tec 9 | .50", m: { [AL]: 3, [PL]: 3 }, p: [1250, 3750, 8750] },
+  ]},
+  { id: "smg", name: "SMG", color: "var(--c-smg)", items: [
+    { n: "Ext. Clip", g: "Micro-Uzi | PDW | Thompson | P90", m: { [AL]: 7, [PL]: 7 }, p: [2500, 8500, 20000] },
+    { n: "FlashLight | Scope", g: "Micro-Uzi | PDW | P90", m: { [RE]: 3 }, p: [750, 1750, 3950] },
+    { n: "Supressor", g: "Micro-Uzi | P90", m: { [AL]: 5, [PL]: 5 }, p: [1500, 5500, 14000] },
+  ]},
+  { id: "rifle", name: "Rifle", color: "var(--c-rifle)", items: [
+    { n: "Supressor", g: "AK | Famas | TAR-21", m: { [AL]: 10, [PL]: 10 }, p: [3500, 11000, 28500] },
+    { n: "Ext. Clip", g: "AK | Famas | TAR-21", m: { [AL]: 12, [PL]: 12 }, p: [4500, 14500, 34500] },
+    { n: "Scope | Flashlight", g: "AK | Famas | TAR-21", m: { [RE]: 3 }, p: [750, 1750, 3950] },
+  ]},
+  { id: "mk2", name: "MK2", color: "var(--c-mk2)", items: [
+    { n: "Heavy Barrel", g: "AK | Famas", m: { [AL]: 10, [PL]: 10 }, p: [3500, 11000, 28500] },
+    { n: "Small Scope", g: "Revolver | AK | Famas", m: { [RE]: 3 }, p: [750, 1750, 3950] },
+    { n: "Large Scope", g: "AK | Famas", m: { [RE]: 3 }, p: [750, 1750, 3950] },
+    { n: "Flat Muzzle", g: "AK | Famas", m: { [AL]: 7, [PL]: 7 }, p: [2000, 7000, 19500] },
+    { n: "Fat-End Muzzle", g: "AK | Famas", m: { [AL]: 7, [PL]: 7 }, p: [2000, 7000, 19500] },
+    { n: "Heavy Duty Muzzle", g: "AK | Famas", m: { [AL]: 7, [PL]: 7 }, p: [2000, 7000, 19500] },
+    { n: "Tactical Muzzle", g: "AK | Famas", m: { [AL]: 7, [PL]: 7 }, p: [2000, 7000, 19500] },
+    { n: "Slanted Muzzle", g: "AK | Famas", m: { [AL]: 7, [PL]: 7 }, p: [2000, 7000, 19500] },
+    { n: "Slip-End Muzzle", g: "AK | Famas", m: { [AL]: 7, [PL]: 7 }, p: [2000, 7000, 19500] },
+    { n: "Precision Muzzle", g: "AK | Famas", m: { [AL]: 10, [PL]: 10 }, p: [3500, 11000, 28500] },
+  ]},
+  { id: "extras", name: "Extras", color: "var(--c-extras)", items: [
+    { n: "Drum", g: "Tec-9 | Draco | PDW", m: { [AL]: 10, [PL]: 10 }, p: [3500, 11000, 28500] },
+    { n: "Grip", g: "PDW | AK | Famas", m: { [AL]: 10, [PL]: 10 }, p: [3500, 11000, 28500] },
+  ]},
+  { id: "kevs", name: "Kevs", color: "var(--c-kevs)", items: [
+    { n: "Kevlar", g: "Colete", m: { [FI]: 5, [PE]: 3, [CO]: 2, [TE]: 5 }, p: [5500, 17000, 23500] },
+  ]},
+];
+const MAT_ORDER = [AL, PL, AC, RE, FI, PE, CO, TE];
+const items = [];
+CATS.forEach(c => c.items.forEach((it, i) => { it.key = c.id + "-" + i; it.cat = c; items.push(it); }));
+
+const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const esc = s => s.replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+
+let qty = {};
+try { qty = JSON.parse(localStorage.getItem("crafting-qty") || "{}") || {}; } catch (e) { qty = {}; }
+const save = () => { try { localStorage.setItem("crafting-qty", JSON.stringify(qty)); } catch (e) {} };
+
+const list = document.getElementById("list");
+list.innerHTML = CATS.map(c => `
+  <section class="cat" style="--cat:${c.color}" data-cat="${c.id}">
+    <div class="cat-head"><h2>${c.name}</h2><span class="count" id="cnt-${c.id}"></span></div>
+    ${c.items.map(it => `
+      <div class="item" data-key="${it.key}" data-search="${esc((c.name + " " + it.n + " " + it.g).toLowerCase())}">
+        <div>
+          <div class="name">${esc(it.n)}</div>
+          <div class="guns">${esc(it.g)}</div>
+          <div class="mats">${Object.entries(it.m).map(([k, v]) => `<span class="chip">${v} ${k}</span>`).join("")}</div>
+          <div class="prices">Blip ${fmt(it.p[0])} · Parceria ${fmt(it.p[1])} · Sem mat. ${fmt(it.p[2])}</div>
+        </div>
+        <div class="qty">
+          <button type="button" data-d="-1" aria-label="Menos ${esc(it.n)}">−</button>
+          <input type="number" min="0" step="1" inputmode="numeric" id="q-${it.key}" aria-label="Quantidade ${esc(it.n)} (${c.name})">
+          <button type="button" data-d="1" aria-label="Mais ${esc(it.n)}">+</button>
+        </div>
+      </div>`).join("")}
+  </section>`).join("");
+
+function render() {
+  const mats = {}; let blip = 0, parc = 0, sem = 0; const sel = [];
+  items.forEach(it => {
+    const q = qty[it.key] || 0;
+    const row = list.querySelector(`[data-key="${it.key}"]`);
+    row.classList.toggle("on", q > 0);
+    const inp = document.getElementById("q-" + it.key);
+    if (document.activeElement !== inp) inp.value = q || "";
+    if (!q) return;
+    for (const [k, v] of Object.entries(it.m)) mats[k] = (mats[k] || 0) + v * q;
+    blip += it.p[0] * q; parc += it.p[1] * q; sem += it.p[2] * q;
+    sel.push({ it, q });
+  });
+  CATS.forEach(c => {
+    const n = c.items.reduce((s, it) => s + (qty[it.key] || 0), 0);
+    document.getElementById("cnt-" + c.id).textContent = n ? n + " un." : "";
+  });
+  document.getElementById("t-blip").textContent = fmt(blip);
+  document.getElementById("t-parc").textContent = fmt(parc);
+  document.getElementById("t-sem").textContent = fmt(sem);
+  const mk = MAT_ORDER.filter(k => mats[k]);
+  document.getElementById("mats").innerHTML = mk.length
+    ? `<table>${mk.map(k => `<tr><td>${k}</td><td class="n">${fmt(mats[k])}</td></tr>`).join("")}</table>`
+    : `<p class="empty">Ainda não escolheste nada. Usa o + ao lado de cada item.</p>`;
+  document.getElementById("sel").innerHTML = sel.length
+    ? `<ul>${sel.map(s => `<li><span>${esc(s.it.n)} <span style="color:var(--muted)">(${s.it.cat.name})</span></span><span class="n">×${s.q}</span></li>`).join("")}</ul>`
+    : `<p class="empty">Sem itens.</p>`;
+  save();
+  return { mats, mk, blip, parc, sem, sel };
+}
+
+list.addEventListener("click", e => {
+  const b = e.target.closest("button[data-d]"); if (!b) return;
+  const key = b.closest(".item").dataset.key;
+  qty[key] = Math.max(0, (qty[key] || 0) + Number(b.dataset.d));
+  render();
+});
+list.addEventListener("input", e => {
+  if (!e.target.matches(".qty input")) return;
+  const key = e.target.closest(".item").dataset.key;
+  const v = Math.max(0, Math.floor(Number(e.target.value) || 0));
+  qty[key] = v; render();
+});
+list.addEventListener("focusout", e => { if (e.target.matches(".qty input")) render(); });
+
+document.getElementById("search").addEventListener("input", e => {
+  const q = e.target.value.trim().toLowerCase();
+  list.querySelectorAll(".cat").forEach(sec => {
+    let any = false;
+    sec.querySelectorAll(".item").forEach(r => { const hit = !q || r.dataset.search.includes(q); r.classList.toggle("hidden-row", !hit); any ||= hit; });
+    sec.hidden = !any;
+  });
+});
+
+const toast = t => { const el = document.getElementById("toast"); el.textContent = t; setTimeout(() => { el.textContent = ""; }, 2500); };
+document.getElementById("reset").addEventListener("click", () => { qty = {}; render(); toast("Quantidades limpas."); });
+document.getElementById("copy").addEventListener("click", () => {
+  const r = render();
+  if (!r.sel.length) { toast("Não há nada para copiar."); return; }
+  const txt = [
+    "ENCOMENDA", ...r.sel.map(s => `- ${s.q}x ${s.it.n} (${s.it.cat.name})`), "",
+    "MATERIAIS", ...r.mk.map(k => `- ${fmt(r.mats[k])} ${k}`), "",
+    `Blip: ${fmt(r.blip)}`, `Parceria: ${fmt(r.parc)}`, `Sem material: ${fmt(r.sem)}`
+  ].join("\n");
+  navigator.clipboard.writeText(txt).then(() => toast("Resumo copiado."), () => toast("Não deu para copiar neste browser."));
+});
+
+// Exemplo inicial (o teu pedido): 100 kevs + 3 heavy barrel — só se ainda não houver nada guardado
+if (!Object.values(qty).some(Boolean)) { qty = { "kevs-0": 100, "mk2-0": 3 }; }
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# Force LF on everything that Linux executes.
+#
+# Git on Windows checks files out as CRLF by default. A shell script or
+# entrypoint carrying \r builds fine and then dies at runtime with
+#   exec /entry.sh: no such file or directory
+# because the \r becomes part of the interpreter path. On this platform that
+# surfaces as a healthy build followed by a 502, which is maximally confusing.
+
+* text=auto eol=lf
+
+Dockerfile      text eol=lf
+*.dockerfile    text eol=lf
+*.sh            text eol=lf
+*.bash          text eol=lf
+entrypoint*     text eol=lf
+docker-entrypoint* text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+.deploy         text eol=lf
+.env.example    text eol=lf
+
+# Binaries must never be touched.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary

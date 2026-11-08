@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+.pnp/
+.pnp.js
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# secrets -- never commit these; they belong in the Dokploy panel
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# logs & local noise
+*.log
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+coverage/
+.cache/
+.idea/
+.vscode/
