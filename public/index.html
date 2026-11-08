@@ -194,7 +194,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
         <label class="switch" for="dirty">
           <input type="checkbox" id="dirty" name="dirty">
           <span class="track" aria-hidden="true"></span>
-          <span>+15% converter para sujo<span class="s-sub">Soma 15% aos preços de venda</span></span>
+          <span>+15% converter para sujo<span class="s-sub">Soma 15% a Parceria e Sem material</span></span>
         </label>
         <div class="big" aria-live="polite">
           <div class="lbl">Sem material</div>
@@ -204,7 +204,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
           <div><dt>Blip</dt><dd class="figure" id="t-blip">0</dd></div>
           <div><dt>Parceria com Blip / Material</dt><dd class="figure" id="t-parc">0</dd></div>
           <div><dt>Custo dos materiais</dt><dd class="figure" id="t-cost">0</dd></div>
-          <div><dt>Lucro, sem material menos custo</dt><dd class="figure" id="t-profit">0</dd></div>
+          <div><dt>Lucro, sem material menos Blip e materiais</dt><dd class="figure" id="t-profit">0</dd></div>
         </dl>
         <div>
           <h3>Materiais necessários</h3>
@@ -332,7 +332,7 @@ function render() {
     const q = qty[it.key] || 0;
     const row = list.querySelector(`[data-key="${it.key}"]`);
     row.classList.toggle("on", q > 0);
-    row.querySelectorAll("td.price").forEach(td => { td.textContent = fmt(it.p[+td.dataset.i] * m); });
+    row.querySelectorAll("td.price").forEach(td => { const i = +td.dataset.i; td.textContent = fmt(it.p[i] * (i === 0 ? 1 : m)); });
     row.querySelector('button[data-d="-1"]').disabled = q === 0;
     const inp = document.getElementById("q-" + it.key);
     if (document.activeElement !== inp) inp.value = q || "";
@@ -342,7 +342,7 @@ function render() {
     blip += it.p[0] * q; parc += it.p[1] * q; sem += it.p[2] * q;
     sel.push({ it, q });
   });
-  blip *= m; parc *= m; sem *= m;
+  parc *= m; sem *= m; // o Blip é um custo: não leva os +15%
   CATS.forEach(c => {
     const n = c.items.reduce((s, it) => s + (qty[it.key] || 0), 0);
     document.getElementById("cnt-" + c.id).textContent = n ? n : "";
@@ -350,7 +350,7 @@ function render() {
   document.getElementById("cnt-todos").textContent = units || "";
   const mk = MAT_ORDER.filter(k => mats[k]);
   const cost = mk.reduce((s, k) => s + mats[k] * (matPrice[k] || 0), 0);
-  const profit = sem - cost;
+  const profit = sem - blip - cost;
   document.getElementById("units").textContent = units + (units === 1 ? " item" : " itens");
   document.getElementById("t-sem").textContent = fmt(sem);
   document.getElementById("d-sem").textContent = fmt(sem);
@@ -360,7 +360,7 @@ function render() {
   document.getElementById("t-cost").textContent = fmt(cost);
   const pe = document.getElementById("t-profit");
   pe.textContent = (profit < 0 ? "−" : "") + fmt(Math.abs(profit));
-  pe.className = "figure " + (profit > 0 && cost > 0 ? "pos" : profit < 0 ? "neg" : "");
+  pe.className = "figure " + (profit > 0 ? "pos" : profit < 0 ? "neg" : "");
   document.getElementById("mats").innerHTML = mk.length
     ? `<table class="list"><thead><tr><th>Material</th><th class="num">Quantidade</th><th class="num">Custo</th></tr></thead><tbody>${mk.map(k => `<tr><td>${esc(k)}</td><td class="num">${fmt(mats[k])}</td><td class="num${matPrice[k] ? "" : " dim"}">${matPrice[k] ? fmt(mats[k] * matPrice[k]) : "sem preço"}</td></tr>`).join("")}</tbody></table>`
     : `<p class="empty">A ficha está vazia. Usa o + numa linha da tabela para juntar acessórios ou kevlar.</p>`;
