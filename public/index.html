@@ -37,14 +37,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .views a { color: var(--color-muted); text-decoration: none; padding-block: var(--space-xs); border-bottom: 2px solid transparent; }
 .views a:hover { color: var(--color-ink); }
 .views a[aria-current="page"] { color: var(--color-ink); border-bottom-color: var(--color-accent); }
-.bar-end { margin-left: auto; display: flex; align-items: center; gap: var(--space-md); }
 
 /* inputs and controls */
 .field { height: 40px; padding-inline: var(--space-sm); border: var(--rule-hair) solid var(--color-muted); border-radius: 0; background: var(--color-paper); color: var(--color-ink); font-size: 1rem; }
 .field::placeholder { color: var(--color-muted); }
 .field:hover { border-color: var(--color-ink-2); }
 .field:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
-#search { width: 15rem; max-width: 100%; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); margin-bottom: var(--space-lg); }
+.toolbar .tabs { margin-bottom: 0; min-width: 0; max-width: 100%; }
+#search { flex: 1 1 14rem; min-width: 0; max-width: 22rem; }
 
 .btn { min-height: 40px; padding: 0 var(--space-lg); border: var(--rule-hair) solid var(--color-ink); border-radius: 0; background: transparent; color: var(--color-ink); font: 400 var(--text-lg)/1 var(--font-display); text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
 .btn:hover { background: var(--row-hover); }
@@ -162,7 +163,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .sheet-p .m { font-family: var(--font-display); font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; }
 .sheet-p .u { grid-column: 1; color: var(--color-muted); font-size: var(--text-sm); }
 .sheet-p .field { grid-column: 2; grid-row: 1 / span 2; width: 9rem; text-align: right; font: 400 var(--text-xl)/1 var(--font-display); font-variant-numeric: tabular-nums; }
-@media (max-width: 40rem) { .bar-end { margin-left: 0; width: 100%; } #search { flex: 1; width: auto; } }
+@media (max-width: 40rem) { #search { max-width: none; flex-basis: 100%; } }
 </style>
 </head>
 <body>
@@ -173,9 +174,6 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
       <a href="#" id="nav-calc" aria-current="page">Encomenda</a>
       <a href="#precos" id="open-prices">Preços dos materiais</a>
     </nav>
-    <div class="bar-end">
-      <input type="search" class="field" id="search" name="q" autocomplete="off" placeholder="Procurar acessório ou arma" aria-label="Procurar acessório ou arma">
-    </div>
   </div>
 </header>
 
@@ -184,7 +182,10 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
     <h1 class="visually-hidden" id="calc-title">Calculadora de Crafting</h1>
     <div class="work">
       <div>
-        <div class="tabs" role="tablist" aria-label="Categoria" id="tabs"></div>
+        <div class="toolbar">
+          <div class="tabs" role="tablist" aria-label="Categoria" id="tabs"></div>
+          <input type="search" class="field" id="search" name="q" autocomplete="off" placeholder="Procurar em Todos" aria-label="Procurar em Todos">
+        </div>
         <div id="list"></div>
       </div>
 
@@ -375,8 +376,17 @@ function render() {
   return { mats, mk, blip, parc, sem, sel, cost, profit };
 }
 
+// cada separador tem a sua própria pesquisa
+const searchByCat = {};
+const searchEl = document.getElementById("search");
+function syncSearch() {
+  const name = cat === "todos" ? "Todos" : CATS.find(c => c.id === cat).name;
+  searchEl.value = searchByCat[cat] || "";
+  searchEl.placeholder = "Procurar em " + name;
+  searchEl.setAttribute("aria-label", "Procurar em " + name);
+}
 function filter() {
-  const q = document.getElementById("search").value.trim().toLowerCase();
+  const q = (searchByCat[cat] || "").trim().toLowerCase();
   let total = 0;
   list.querySelectorAll("tbody.group").forEach(g => {
     let any = 0;
@@ -401,8 +411,8 @@ list.addEventListener("input", e => {
   render();
 });
 list.addEventListener("focusout", e => { if (e.target.matches(".qty input")) render(); });
-tabs.addEventListener("click", e => { const b = e.target.closest("button[data-cat]"); if (!b) return; cat = b.dataset.cat; filter(); });
-document.getElementById("search").addEventListener("input", () => { if (location.hash === "#precos") location.hash = ""; filter(); });
+tabs.addEventListener("click", e => { const b = e.target.closest("button[data-cat]"); if (!b) return; cat = b.dataset.cat; syncSearch(); filter(); });
+searchEl.addEventListener("input", () => { searchByCat[cat] = searchEl.value; filter(); });
 
 document.getElementById("dirty").addEventListener("change", e => { dirty = e.target.checked; store("crafting-dirty", dirty); render(); });
 
