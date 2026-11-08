@@ -28,3 +28,15 @@ app's *Environment* tab — **not** in this repo.
 
 Architecture, corner cases, scaling: `/home/alanca/paas-setup/PAAS-CONTEXT.md` on the Pi.
 For deployment problems use the `paas-deploy` skill.
+
+## Estrutura
+
+Site estático em `public/`, servido por nginx (ver `Dockerfile`).
+
+- `public/index.html`: painel de ferramentas (a página inicial).
+- `public/<ferramenta>/index.html`: cada ferramenta na sua pasta (ex.: `public/crafting/`).
+- `public/tokens.css` e `public/base.css`: cores, tipos e regras base partilhados por todas as páginas.
+
+Para juntar uma ferramenta: cria `public/<nome>/index.html` (importa `../tokens.css` e `../base.css`,
+e põe no topo o caminho `Ferramentas / <Nome>` com link para `../`), depois junta uma linha `<li class="tool">`
+no painel e, se a ferramenta guardar dados, uma entrada em `STATE` para mostrar o estado no painel.
