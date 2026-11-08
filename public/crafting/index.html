@@ -3,17 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Craft de Acessórios</title>
+<title>Calculadora de Crafting</title>
 <meta name="description" content="Calcula materiais, custo e preço de venda dos acessórios de armas e kevlar para o servidor FiveM.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700;800&family=Manrope:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans+Extra+Condensed:wght@200;400&family=Barlow:wght@300;400;500&display=swap">
 <style>
-/* Hallmark · shape: app screen · genre: atmospheric · theme: custom · idea: "Los Santos ao fim do dia: o painel é o HUD de quem crafta na rua, dinheiro a verde e a cidade em laranja de pôr-do-sol" · vibe: "asfalto à noite, HUD de rua, dinheiro" · redesign: full
- * nav: top bar with the sunset line, two views (encomenda, preços) and a category tab row with search · signature: the cash readout, the sale total in money green with a $ like a street HUD · states: empty ficha, item chosen, missing material price, no search hit · paper: night asphalt blue, accent: sunset orange for action and selection, money green only on cash figures, faces: Saira Extra Condensed over Manrope
- * axes: dark/display-condensed/chromatic-orange · posture: restrained · contrast: pass · v2.0.0 */
-/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: R, two signals (orange and green); green is kept to cash figures only so each colour has one job */
-/* Hallmark · answered F4 · the lit tab marks the selected category, a state like a highlighted menu row, not a second action; Copiar is the only filled button */
+/* Hallmark · shape: app screen · genre: atmospheric · theme: Darkroom (deal 3/3, seed crafting-price-calculator-fivem-9103·8ad352fc·2026-11-08·r0) · redesign: full
+ * nav: top bar with two views (encomenda, preços) and a category tab row · signature: the ficha, a sticky order manifest with the sale total as a hairline figure · states: empty ficha, item chosen, missing material price · darkroom: amber
+ * axes: dark/display-condensed/chromatic-amber · posture: restrained · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V3 · weakest: V, an app screen keeps a table and a side panel; the ficha as a night-shift order manifest carries the identity instead of ornament */
 /* Hallmark · dropped #prices-dlg, #prices-form, #prices-cancel, #prices-title · the material prices moved from a modal to their own view at #precos */
 @import url("../tokens.css");
 @import url("../base.css");
@@ -30,10 +29,10 @@ body { font-size: 1.0625rem; }
 .shell { max-width: var(--container); margin-inline: auto; padding-left: max(var(--gutter), env(safe-area-inset-left, 0px)); padding-right: max(var(--gutter), env(safe-area-inset-right, 0px)); }
 
 /* top bar */
-.bar { background: linear-gradient(90deg, var(--color-sun), var(--color-accent)) top / 100% 3px no-repeat, var(--color-paper); position: sticky; top: env(safe-area-inset-top, 0px); z-index: var(--z-sticky-nav); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: var(--z-sticky-nav); background: var(--color-paper); border-bottom: var(--rule-hair) solid var(--color-rule); }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: var(--z-sticky-nav); background: var(--color-paper); }
 .bar-in { min-height: var(--bar-h); display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap; padding-block: var(--space-xs); }
-.mark { font-family: var(--font-display); font-weight: 800; font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; letter-spacing: var(--tracking-display); color: var(--color-ink); text-decoration: none; }
+.mark { font-family: var(--font-display); font-weight: 400; font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; letter-spacing: var(--tracking-display); color: var(--color-ink); text-decoration: none; }
 .crumbs { display: flex; align-items: baseline; gap: var(--space-xs); }
 .crumb { color: var(--color-muted); text-decoration: none; font-size: var(--text-sm); }
 .crumb:hover { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-accent); }
@@ -52,7 +51,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .toolbar .tabs { margin-bottom: 0; min-width: 0; max-width: 100%; }
 #search { flex: 1 1 14rem; min-width: 0; max-width: 22rem; }
 
-.btn { min-height: 40px; padding: 0 var(--space-lg); border: var(--rule-hair) solid var(--color-ink); border-radius: 0; background: transparent; color: var(--color-ink); font: 700 var(--text-lg)/1 var(--font-display); text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+.btn { min-height: 40px; padding: 0 var(--space-lg); border: var(--rule-hair) solid var(--color-ink); border-radius: 0; background: transparent; color: var(--color-ink); font: 400 var(--text-lg)/1 var(--font-display); text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
 .btn:hover { background: var(--row-hover); }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; }
@@ -74,21 +73,20 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 /* layout */
 .work { display: grid; grid-template-columns: minmax(0, 1fr) 24rem; gap: var(--space-xl); align-items: start; padding-block: var(--space-xl) var(--space-3xl); }
-@media (max-width: 68rem) { .work { grid-template-columns: minmax(0, 1fr); } .ficha { position: relative; top: auto; } }
+@media (max-width: 68rem) { .work { grid-template-columns: minmax(0, 1fr); } .ficha.grained { position: relative; top: auto; } }
 .dock { display: none; }
 @media (max-width: 68rem) {
   .dock { display: flex; position: fixed; inset: auto 0 0; z-index: var(--z-sticky); align-items: center; justify-content: space-between; gap: var(--space-md); padding: var(--space-xs) max(var(--gutter), env(safe-area-inset-right, 0px)) calc(var(--space-xs) + env(safe-area-inset-bottom, 0px)) max(var(--gutter), env(safe-area-inset-left, 0px)); background: var(--color-paper-2); border-top: var(--rule-hair) solid var(--color-rule); }
   .dock .lbl { color: var(--color-muted); font-size: var(--text-sm); display: block; }
-  .dock .figure { font-size: var(--text-figure-s); color: var(--color-money); font-variant-numeric: tabular-nums; }
+  .dock .figure { font-size: var(--text-figure-s); font-variant-numeric: tabular-nums; }
   main.shell { padding-bottom: 88px; }
 }
 
 .tabs { display: flex; gap: var(--space-xs); overflow-x: auto; scrollbar-width: none; margin-bottom: var(--space-lg); }
-.tabs button { flex: none; min-height: 40px; padding: 0 var(--space-md); border: var(--rule-hair) solid var(--color-rule); border-radius: 0; background: transparent; color: var(--color-ink-2); font: 700 var(--text-lg)/1 var(--font-display); text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: var(--space-xs); transition: color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+.tabs button { flex: none; min-height: 40px; padding: 0 var(--space-md); border: var(--rule-hair) solid var(--color-rule); border-radius: 0; background: transparent; color: var(--color-muted); font: 400 var(--text-lg)/1 var(--font-display); text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: var(--space-xs); transition: color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
 .tabs button:hover { color: var(--color-ink); border-color: var(--color-muted); }
 .tabs button:active { transform: translateY(1px); }
-.tabs button[aria-selected="true"] { color: var(--color-accent-ink); background: var(--color-accent); border-color: var(--color-accent); }
-.tabs button[aria-selected="true"] .n { color: var(--color-accent-ink); }
+.tabs button[aria-selected="true"] { color: var(--color-ink); border-color: var(--color-ink); }
 .tabs .n { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-accent); font-variant-numeric: tabular-nums; text-transform: none; }
 
 /* the sheet */
@@ -97,13 +95,13 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .sheet th.num, .sheet td.num { text-align: right; }
 .sheet td { padding: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); vertical-align: middle; }
 .sheet tbody.group tr.ghead td { padding-top: var(--space-xl); border-bottom-color: var(--color-muted); }
-.sheet h2 { font-weight: 800; font-size: var(--text-3xl); max-width: none; }
+.sheet h2 { font-weight: 400; font-size: var(--text-3xl); max-width: none; }
 .sheet tr.item:hover { background: var(--row-hover); }
 .sheet tr.item.on { background: var(--color-paper-2); }
 .sheet .name { font-weight: 500; color: var(--color-ink); }
 .sheet .guns, .sheet .mats { color: var(--color-muted); font-size: var(--text-sm); }
 .sheet td.price { color: var(--color-ink-2); white-space: nowrap; }
-.sheet td.price.sem { color: var(--color-money); font-weight: 600; }
+.sheet td.price.sem { color: var(--color-ink); }
 .sheet td.qcell { width: 1%; white-space: nowrap; }
 
 .qty { display: inline-flex; align-items: stretch; }
@@ -131,14 +129,17 @@ tr.on .qty input { color: var(--color-accent); }
 
 /* the ficha */
 .ficha { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--bar-h) + var(--space-lg)); background: var(--color-paper-2); padding: var(--space-lg); display: grid; gap: var(--space-lg); }
-.ficha h2 { font-weight: 800; font-size: var(--text-3xl); }
+.grained { position: relative; isolation: isolate; }
+.grained::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: var(--grain); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 9 -4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 200px 200px; }
+.ficha.grained { position: sticky; }
+.ficha h2 { font-weight: 400; font-size: var(--text-3xl); }
 .sheet h2, .ficha h2, .precos h2 { text-transform: uppercase; }
 .ficha h3 { font-family: var(--font-body); font-weight: 400; font-size: var(--text-sm); color: var(--color-muted); text-transform: none; letter-spacing: 0; line-height: 1.4; margin-bottom: var(--space-xs); }
 .ficha-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); padding-bottom: var(--space-sm); }
 .ficha-head .units { color: var(--color-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
 .big .lbl { color: var(--color-muted); font-size: var(--text-sm); }
-.figure { font-family: var(--font-display); font-weight: 700; line-height: 0.95; letter-spacing: var(--tracking-display); font-variant-numeric: tabular-nums; }
-.big .figure { font-size: var(--text-figure); color: var(--color-money); text-shadow: 0 2px 0 var(--color-shadow); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.figure { font-family: var(--font-display); font-weight: 200; line-height: 0.95; letter-spacing: var(--tracking-display); font-variant-numeric: tabular-nums; }
+.big .figure { font-size: var(--text-figure); color: var(--color-ink); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .rows { display: grid; }
 .rows > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); padding-block: var(--space-xs); border-bottom: var(--rule-hair) solid var(--color-rule); }
 .rows dt { color: var(--color-muted); font-size: var(--text-sm); }
@@ -159,11 +160,11 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 
 /* prices view */
 .precos { padding-block: var(--space-xl) var(--space-3xl); max-width: 44rem; display: grid; gap: var(--space-lg); }
-.precos h2 { font-size: var(--text-3xl); font-weight: 800; }
+.precos h2 { font-size: var(--text-3xl); font-weight: 400; }
 .precos .lead-s { color: var(--color-ink-2); max-width: 52ch; }
 .sheet-p { border-top: var(--rule-hair) solid var(--color-muted); }
 .sheet-p label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2xs) var(--space-lg); padding-block: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); cursor: pointer; }
-.sheet-p .m { font-family: var(--font-display); font-weight: 700; font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; }
+.sheet-p .m { font-family: var(--font-display); font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; }
 .sheet-p .u { grid-column: 1; color: var(--color-muted); font-size: var(--text-sm); }
 .sheet-p .field { grid-column: 2; grid-row: 1 / span 2; width: 9rem; text-align: right; font: 400 var(--text-xl)/1 var(--font-display); font-variant-numeric: tabular-nums; }
 @media (max-width: 40rem) { #search { max-width: none; flex-basis: 100%; } }
@@ -175,7 +176,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
     <nav class="crumbs" aria-label="Caminho">
       <a class="crumb" href="../">Ferramentas</a>
       <span class="sep" aria-hidden="true">/</span>
-      <a class="mark" href="#" aria-label="Craft de acessórios, início">Craft de acessórios</a>
+      <a class="mark" href="#" aria-label="Calculadora de Crafting, início">Crafting</a>
     </nav>
     <nav class="views" aria-label="Vistas">
       <a href="#" id="nav-calc" aria-current="page">Encomenda</a>
@@ -186,7 +187,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 
 <main class="shell">
   <section id="view-calc" aria-labelledby="calc-title">
-    <h1 class="visually-hidden" id="calc-title">Craft de acessórios</h1>
+    <h1 class="visually-hidden" id="calc-title">Calculadora de Crafting</h1>
     <div class="work">
       <div>
         <div class="toolbar">
@@ -196,7 +197,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
         <div id="list"></div>
       </div>
 
-      <aside class="ficha" aria-labelledby="ficha-title">
+      <aside class="ficha grained" aria-labelledby="ficha-title">
         <div class="ficha-head"><h2 id="ficha-title">Ficha</h2><span class="units" id="units">0 itens</span></div>
         <label class="switch" for="dirty">
           <input type="checkbox" id="dirty" name="dirty">
@@ -290,7 +291,6 @@ CATS.forEach(c => c.items.forEach((it, i) => { it.key = c.id + "-" + i; it.cat =
 items.forEach(it => { it.mt = Object.entries(it.m).map(([k, v]) => v + " " + k).join(", "); });
 
 const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-const money = n => "$" + fmt(n);
 const esc = s => String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
 const load = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
 const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -340,7 +340,7 @@ function render() {
     const q = qty[it.key] || 0;
     const row = list.querySelector(`[data-key="${it.key}"]`);
     row.classList.toggle("on", q > 0);
-    row.querySelectorAll("td.price").forEach(td => { const i = +td.dataset.i; td.textContent = money(it.p[i] * (i === 0 ? 1 : m)); });
+    row.querySelectorAll("td.price").forEach(td => { const i = +td.dataset.i; td.textContent = fmt(it.p[i] * (i === 0 ? 1 : m)); });
     row.querySelector('button[data-d="-1"]').disabled = q === 0;
     const inp = document.getElementById("q-" + it.key);
     if (document.activeElement !== inp) inp.value = q || "";
@@ -360,17 +360,17 @@ function render() {
   const cost = mk.reduce((s, k) => s + mats[k] * (matPrice[k] || 0), 0);
   const profit = sem - blip - cost;
   document.getElementById("units").textContent = units + (units === 1 ? " item" : " itens");
-  document.getElementById("t-sem").textContent = money(sem);
-  document.getElementById("d-sem").textContent = money(sem);
+  document.getElementById("t-sem").textContent = fmt(sem);
+  document.getElementById("d-sem").textContent = fmt(sem);
   document.getElementById("d-units").textContent = units + (units === 1 ? " item" : " itens");
-  document.getElementById("t-blip").textContent = money(blip);
-  document.getElementById("t-parc").textContent = money(parc);
-  document.getElementById("t-cost").textContent = money(cost);
+  document.getElementById("t-blip").textContent = fmt(blip);
+  document.getElementById("t-parc").textContent = fmt(parc);
+  document.getElementById("t-cost").textContent = fmt(cost);
   const pe = document.getElementById("t-profit");
-  pe.textContent = (profit < 0 ? "−" : "") + money(Math.abs(profit));
+  pe.textContent = (profit < 0 ? "−" : "") + fmt(Math.abs(profit));
   pe.className = "figure " + (profit > 0 ? "pos" : profit < 0 ? "neg" : "");
   document.getElementById("mats").innerHTML = mk.length
-    ? `<table class="list"><thead><tr><th>Material</th><th class="num">Quantidade</th><th class="num">Custo</th></tr></thead><tbody>${mk.map(k => `<tr><td>${esc(k)}</td><td class="num">${fmt(mats[k])}</td><td class="num${matPrice[k] ? "" : " dim"}">${matPrice[k] ? money(mats[k] * matPrice[k]) : "sem preço"}</td></tr>`).join("")}</tbody></table>`
+    ? `<table class="list"><thead><tr><th>Material</th><th class="num">Quantidade</th><th class="num">Custo</th></tr></thead><tbody>${mk.map(k => `<tr><td>${esc(k)}</td><td class="num">${fmt(mats[k])}</td><td class="num${matPrice[k] ? "" : " dim"}">${matPrice[k] ? fmt(mats[k] * matPrice[k]) : "sem preço"}</td></tr>`).join("")}</tbody></table>`
     : `<p class="empty">A ficha está vazia. Usa o + numa linha da tabela para juntar acessórios ou kevlar.</p>`;
   const missing = mk.filter(k => !matPrice[k]);
   document.getElementById("price-note").innerHTML = missing.length
@@ -441,7 +441,7 @@ document.getElementById("copy").addEventListener("click", () => {
   if (!r.sel.length) { toast("A ficha está vazia, não há nada para copiar."); return; }
   const txt = [
     "MATERIAIS", ...r.mk.map(k => `- ${fmt(r.mats[k])} ${k}`), "",
-    `Dinheiro (Blip): ${money(r.blip)}`
+    `Dinheiro (Blip): ${fmt(r.blip)}`
   ].join("\n");
   navigator.clipboard.writeText(txt).then(() => toast("Materiais e Blip copiados."), () => toast("Este browser não deixou copiar. Tenta noutro browser."));
 });
