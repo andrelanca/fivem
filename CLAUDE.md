@@ -39,4 +39,4 @@ Site estático em `public/`, servido por nginx (ver `Dockerfile`).
 
 Para juntar uma ferramenta: cria `public/<nome>/index.html` (importa `../tokens.css` e `../base.css`,
 e põe no topo o caminho `Ferramentas / <Nome>` com link para `../`), depois junta uma linha `<li class="tool">`
-no painel e, se a ferramenta guardar dados, uma entrada em `STATE` para mostrar o estado no painel.
+no painel, só com o título.

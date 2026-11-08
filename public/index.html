@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans+Extra+Condensed:wght@200;400&family=Barlow:wght@300;400;500&display=swap">
 <style>
 /* Hallmark · shape: app screen · genre: atmospheric · theme: Darkroom (deal 3/3, seed crafting-price-calculator-fivem-9103·8ad352fc·2026-11-08·r0) · redesign: full
- * nav: top bar, the hub is the home of every tool · signature: the tool sheet, each tool a full-width row that shows its live state from this browser · states: tool with saved work, tool untouched · darkroom: amber
+ * nav: top bar, the hub is the home of every tool · signature: the tool sheet, each tool a full-width row with its title · states: one list · darkroom: amber
  * axes: dark/display-condensed/chromatic-amber · posture: restrained · contrast: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H5 E4 S4 R5 V3 · weakest: V, a launcher with one tool is a short list; each row shows what is saved in it so the hub earns its place before the second tool exists */
 @import url("./tokens.css");
@@ -30,22 +30,15 @@ body { font-size: 1.0625rem; }
 
 .tools { list-style: none; margin: 0 0 var(--space-3xl); padding: 0; border-top: var(--rule-hair) solid var(--color-muted); }
 .tool { border-bottom: var(--rule-hair) solid var(--color-rule); }
-.tool a { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; align-items: center; gap: var(--space-sm) var(--space-xl); padding: var(--space-lg) var(--space-sm); color: inherit; text-decoration: none; transition: background-color var(--dur-micro) var(--ease-out); }
+.tool a { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-sm) var(--space-xl); padding: var(--space-lg) var(--space-sm); color: inherit; text-decoration: none; transition: background-color var(--dur-micro) var(--ease-out); }
 .tool a:hover { background: var(--row-hover); }
 .tool a:active { background: var(--color-paper-2); }
 .tool a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
 .tool h2 { font-weight: 400; font-size: var(--text-3xl); text-transform: uppercase; max-width: none; }
-.tool .state { color: var(--color-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
-.tool .state strong { display: block; font-family: var(--font-display); font-weight: 200; font-size: var(--text-2xl); color: var(--color-ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
 .tool .go { min-height: 40px; padding: 0 var(--space-lg); border: var(--rule-hair) solid var(--color-ink); display: inline-flex; align-items: center; font: 400 var(--text-lg)/1 var(--font-display); text-transform: uppercase; white-space: nowrap; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
 .tool a:hover .go { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
 .more { color: var(--color-muted); font-size: var(--text-sm); padding: var(--space-lg) var(--space-sm); }
 
-@media (max-width: 56rem) {
-  .tool a { grid-template-columns: minmax(0, 1fr) auto; }
-  .tool h2, .tool .state { grid-column: 1; }
-  .tool .go { grid-column: 2; grid-row: 1 / span 2; }
-}
 </style>
 </head>
 <body>
@@ -63,27 +56,11 @@ body { font-size: 1.0625rem; }
     <li class="tool">
       <a href="crafting/" data-tool="crafting">
         <h2>Craft de Acessórios</h2>
-        <p class="state" id="state-crafting">Ficha vazia</p>
         <span class="go">Abrir</span>
       </a>
     </li>
   </ul>
   <p class="more">Novas ferramentas aparecem nesta lista.</p>
 </main>
-<script>
-// Estado guardado de cada ferramenta (só leitura, do localStorage deste browser)
-const STATE = {
-  crafting() {
-    let qty = {};
-    try { qty = JSON.parse(localStorage.getItem("crafting-qty") || "{}") || {}; } catch (e) {}
-    const n = Object.values(qty).reduce((s, v) => s + (Number(v) || 0), 0);
-    return n ? `<strong>${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</strong>${n === 1 ? "item" : "itens"} na ficha` : "Ficha vazia";
-  },
-};
-for (const [id, fn] of Object.entries(STATE)) {
-  const el = document.getElementById("state-" + id);
-  if (el) el.innerHTML = fn();
-}
-</script>
 </body>
 </html>
