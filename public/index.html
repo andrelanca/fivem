@@ -216,7 +216,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
           <div id="sel"></div>
         </div>
         <div class="actions">
-          <button type="button" class="btn btn--primary" id="copy">Copiar ficha</button>
+          <button type="button" class="btn btn--primary" id="copy">Copiar materiais e Blip</button>
           <button type="button" class="btn" id="reset">Limpar</button>
         </div>
         <p class="toast" id="toast" role="status"></p>
@@ -432,13 +432,10 @@ document.getElementById("copy").addEventListener("click", () => {
   const r = render();
   if (!r.sel.length) { toast("A ficha está vazia, não há nada para copiar."); return; }
   const txt = [
-    "ENCOMENDA", ...r.sel.map(s => `- ${s.q}x ${s.it.n} (${s.it.cat.name})`), "",
     "MATERIAIS", ...r.mk.map(k => `- ${fmt(r.mats[k])} ${k}`), "",
-    `Blip: ${fmt(r.blip)}`, `Parceria: ${fmt(r.parc)}`, `Sem material: ${fmt(r.sem)}`,
-    ...(dirty ? ["(inclui +15% converter para sujo)"] : []),
-    `Custo dos materiais: ${fmt(r.cost)}`, `Lucro: ${r.profit < 0 ? "-" : ""}${fmt(Math.abs(r.profit))}`
+    `Dinheiro (Blip): ${fmt(r.blip)}`
   ].join("\n");
-  navigator.clipboard.writeText(txt).then(() => toast("Ficha copiada."), () => toast("Este browser não deixou copiar. Tenta noutro browser."));
+  navigator.clipboard.writeText(txt).then(() => toast("Materiais e Blip copiados."), () => toast("Este browser não deixou copiar. Tenta noutro browser."));
 });
 
 function route() {
