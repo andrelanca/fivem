@@ -7,25 +7,25 @@
 <meta name="description" content="Painel com as ferramentas do servidor FiveM: calculadora de crafting e as que vierem a seguir.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans+Extra+Condensed:wght@200;400&family=Barlow:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700;800&family=Manrope:wght@400;500;600&display=swap">
 <style>
-/* Hallmark · shape: app screen · genre: atmospheric · theme: Darkroom (deal 3/3, seed crafting-price-calculator-fivem-9103·8ad352fc·2026-11-08·r0) · redesign: full
- * nav: top bar, the hub is the home of every tool · signature: the tool sheet, each tool a full-width row that shows its live state from this browser · states: tool with saved work, tool untouched · darkroom: amber
- * axes: dark/display-condensed/chromatic-amber · posture: restrained · contrast: pass · v2.0.0 */
-/* Hallmark · pre-emit critique: P4 H5 E4 S4 R5 V3 · weakest: V, a launcher with one tool is a short list; each row shows what is saved in it so the hub earns its place before the second tool exists */
+/* Hallmark · shape: app screen · genre: atmospheric · theme: custom · idea: "Los Santos ao fim do dia: o painel é o HUD de quem crafta na rua, dinheiro a verde e a cidade em laranja de pôr-do-sol" · vibe: "asfalto à noite, HUD de rua, dinheiro" · redesign: full
+ * nav: top bar with the sunset line, the hub is the home of every tool · signature: the tool sheet, each tool a full-width row with its saved state · states: tool with saved work, tool untouched · paper: night asphalt blue, accent: sunset orange for action and selection, money green only on cash figures, faces: Saira Extra Condensed over Manrope
+ * axes: dark/display-condensed/chromatic-orange · posture: restrained · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H5 E4 S4 R5 V4 · weakest: S, a launcher list fits many products; the sunset line, the street-HUD type and the live state of each tool tie it to the server */
 @import url("./tokens.css");
 @import url("./base.css");
 
 :root { --bar-h: 64px; --row-hover: color-mix(in oklab, var(--color-ink) 4%, transparent); }
 body { font-size: 1.0625rem; }
 .shell { max-width: var(--container); margin-inline: auto; padding-left: max(var(--gutter), env(safe-area-inset-left, 0px)); padding-right: max(var(--gutter), env(safe-area-inset-right, 0px)); }
-.bar { border-bottom: var(--rule-hair) solid var(--color-rule); }
+.bar { background: linear-gradient(90deg, var(--color-sun), var(--color-accent)) top / 100% 3px no-repeat, var(--color-paper); border-bottom: var(--rule-hair) solid var(--color-rule); }
 .bar-in { min-height: var(--bar-h); display: flex; align-items: center; gap: var(--space-lg); }
-.mark { font-family: var(--font-display); font-weight: 400; font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; letter-spacing: var(--tracking-display); color: var(--color-ink); text-decoration: none; }
+.mark { font-family: var(--font-display); font-weight: 800; font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; letter-spacing: var(--tracking-display); color: var(--color-ink); text-decoration: none; }
 .mark:hover { color: var(--color-ink-2); }
 
 .head { padding-block: var(--space-2xl) var(--space-xl); display: grid; gap: var(--space-sm); }
-.head h1 { font-size: clamp(3.5rem, 2rem + 6vw, 7rem); font-weight: 200; text-transform: uppercase; line-height: 1; max-width: none; }
+.head h1 { font-size: clamp(3.5rem, 2rem + 6vw, 7rem); font-weight: 800; text-transform: uppercase; line-height: 1; max-width: none; }
 .head p { color: var(--color-ink-2); max-width: 48ch; }
 
 .tools { list-style: none; margin: 0 0 var(--space-3xl); padding: 0; border-top: var(--rule-hair) solid var(--color-muted); }
@@ -34,11 +34,11 @@ body { font-size: 1.0625rem; }
 .tool a:hover { background: var(--row-hover); }
 .tool a:active { background: var(--color-paper-2); }
 .tool a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
-.tool h2 { font-weight: 400; font-size: var(--text-3xl); text-transform: uppercase; max-width: none; }
+.tool h2 { font-weight: 700; font-size: var(--text-3xl); text-transform: uppercase; max-width: none; }
 .tool .desc { color: var(--color-ink-2); font-size: var(--text-md); }
 .tool .state { color: var(--color-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
-.tool .state strong { display: block; font-family: var(--font-display); font-weight: 200; font-size: var(--text-2xl); color: var(--color-ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
-.tool .go { min-height: 40px; padding: 0 var(--space-lg); border: var(--rule-hair) solid var(--color-ink); display: inline-flex; align-items: center; font: 400 var(--text-lg)/1 var(--font-display); text-transform: uppercase; white-space: nowrap; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+.tool .state strong { display: block; font-family: var(--font-display); font-weight: 700; font-size: var(--text-2xl); color: var(--color-ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tool .go { min-height: 40px; padding: 0 var(--space-lg); border: var(--rule-hair) solid var(--color-ink); display: inline-flex; align-items: center; font: 700 var(--text-lg)/1 var(--font-display); text-transform: uppercase; white-space: nowrap; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
 .tool a:hover .go { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
 .more { color: var(--color-muted); font-size: var(--text-sm); padding: var(--space-lg) var(--space-sm); }
 
@@ -63,7 +63,7 @@ body { font-size: 1.0625rem; }
   <ul class="tools" id="tools">
     <li class="tool">
       <a href="crafting/" data-tool="crafting">
-        <h2>Crafting</h2>
+        <h2>Craft de acessórios</h2>
         <p class="desc">Acessórios de armas e kevlar por quantidade: materiais, preço Blip, Parceria e Sem material, custo e lucro.</p>
         <p class="state" id="state-crafting">Ficha vazia</p>
         <span class="go">Abrir</span>
