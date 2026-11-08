@@ -30,12 +30,11 @@ body { font-size: 1.0625rem; }
 
 .tools { list-style: none; margin: 0 0 var(--space-3xl); padding: 0; border-top: var(--rule-hair) solid var(--color-muted); }
 .tool { border-bottom: var(--rule-hair) solid var(--color-rule); }
-.tool a { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.5fr) minmax(0, 1fr) auto; align-items: center; gap: var(--space-sm) var(--space-xl); padding: var(--space-lg) var(--space-sm); color: inherit; text-decoration: none; transition: background-color var(--dur-micro) var(--ease-out); }
+.tool a { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; align-items: center; gap: var(--space-sm) var(--space-xl); padding: var(--space-lg) var(--space-sm); color: inherit; text-decoration: none; transition: background-color var(--dur-micro) var(--ease-out); }
 .tool a:hover { background: var(--row-hover); }
 .tool a:active { background: var(--color-paper-2); }
 .tool a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
 .tool h2 { font-weight: 400; font-size: var(--text-3xl); text-transform: uppercase; max-width: none; }
-.tool .desc { color: var(--color-ink-2); font-size: var(--text-md); }
 .tool .state { color: var(--color-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
 .tool .state strong { display: block; font-family: var(--font-display); font-weight: 200; font-size: var(--text-2xl); color: var(--color-ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
 .tool .go { min-height: 40px; padding: 0 var(--space-lg); border: var(--rule-hair) solid var(--color-ink); display: inline-flex; align-items: center; font: 400 var(--text-lg)/1 var(--font-display); text-transform: uppercase; white-space: nowrap; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
@@ -44,8 +43,8 @@ body { font-size: 1.0625rem; }
 
 @media (max-width: 56rem) {
   .tool a { grid-template-columns: minmax(0, 1fr) auto; }
-  .tool h2, .tool .desc, .tool .state { grid-column: 1; }
-  .tool .go { grid-column: 2; grid-row: 1 / span 3; }
+  .tool h2, .tool .state { grid-column: 1; }
+  .tool .go { grid-column: 2; grid-row: 1 / span 2; }
 }
 </style>
 </head>
@@ -64,7 +63,6 @@ body { font-size: 1.0625rem; }
     <li class="tool">
       <a href="crafting/" data-tool="crafting">
         <h2>Craft de Acessórios</h2>
-        <p class="desc">Acessórios de armas e kevlar por quantidade: materiais, preço Blip, Parceria e Sem material, custo e lucro.</p>
         <p class="state" id="state-crafting">Ficha vazia</p>
         <span class="go">Abrir</span>
       </a>
