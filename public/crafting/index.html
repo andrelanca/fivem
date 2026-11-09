@@ -162,6 +162,13 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .precos { padding-block: var(--space-xl) var(--space-3xl); max-width: 44rem; display: grid; gap: var(--space-lg); }
 .precos h2 { font-size: var(--text-3xl); font-weight: 400; }
 .precos .lead-s { color: var(--color-ink-2); max-width: 52ch; }
+.import { display: grid; gap: var(--space-sm); padding: var(--space-lg); background: var(--color-paper-2); }
+.import label.t { font-size: var(--text-sm); color: var(--color-ink-2); }
+.import textarea.field { height: auto; min-height: 8rem; padding: var(--space-sm); font: 400 var(--text-md)/1.5 var(--font-body); resize: vertical; width: 100%; }
+.import .actions { justify-content: flex-start; }
+.import .actions .btn { flex: 0 1 auto; }
+label.btn { display: inline-flex; align-items: center; justify-content: center; }
+.import .result { min-height: 1lh; font-size: var(--text-sm); color: var(--color-ink-2); }
 .sheet-p { border-top: var(--rule-hair) solid var(--color-muted); }
 .sheet-p label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2xs) var(--space-lg); padding-block: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); cursor: pointer; }
 .sheet-p .m { font-family: var(--font-display); font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; }
@@ -235,6 +242,16 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
   <section id="view-precos" class="precos" aria-labelledby="precos-title" hidden>
     <h2 id="precos-title">Preços dos materiais</h2>
     <p class="lead-s">Preço por unidade. Guarda sozinho neste browser e entra no custo dos materiais da ficha.</p>
+    <div class="import">
+      <label class="t" for="import-text">Importar lista: uma linha por material, no formato Material,Preço</label>
+      <textarea class="field" id="import-text" name="import-text" rows="6" spellcheck="false" placeholder="Alumínio,2000.00&#10;Plástico,1800.00&#10;Restos Eletrónicos,1500.00"></textarea>
+      <div class="actions">
+        <button type="button" class="btn btn--primary" id="import-btn">Importar preços</button>
+        <label class="btn" for="import-file">Abrir ficheiro</label>
+        <input type="file" class="visually-hidden" id="import-file" name="import-file" accept=".csv,.txt,text/csv,text/plain">
+      </div>
+      <p class="result" id="import-result" role="status"></p>
+    </div>
     <div class="sheet-p" id="prices-grid"></div>
     <div class="actions"><a class="btn" href="#" id="back-calc">Voltar à encomenda</a></div>
   </section>
@@ -431,6 +448,53 @@ grid.addEventListener("input", e => {
   if (v) matPrice[inp.dataset.mat] = v; else delete matPrice[inp.dataset.mat];
   store("crafting-mat-prices", matPrice);
   render();
+});
+
+// Importar "Material,Preço" (também aceita ; ou tab). Os nomes comparam-se sem acentos,
+// maiúsculas nem plurais, por isso "Restos Eletrónicos" acerta em "Resto Eletrónico".
+const norm = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
+  .split(/\s+/).map(w => w.length > 3 ? w.replace(/(es|s)$/, "") : w).join(" ");
+const MAT_BY_NORM = Object.fromEntries(MAT_ORDER.map(k => [norm(k), k]));
+const parsePrice = t => {
+  t = t.trim().replace(/[^\d.,-]/g, "");
+  if (t.includes(",") && t.includes(".")) t = t.lastIndexOf(",") > t.lastIndexOf(".") ? t.replace(/\./g, "").replace(",", ".") : t.replace(/,/g, "");
+  else if (t.includes(",")) t = t.replace(",", ".");
+  return Number(t);
+};
+function importPrices(text) {
+  const done = [], unused = [], bad = [];
+  text.split(/\r?\n/).forEach(line => {
+    if (!line.trim()) return;
+    const m = line.match(/^(.*?)[;,\t]\s*([^;\t]*\d[^;\t]*)$/);
+    if (!m) { bad.push(line.trim()); return; }
+    const name = m[1].trim().replace(/^"|"$/g, ""), price = parsePrice(m[2]);
+    if (!name || !isFinite(price) || price < 0) { bad.push(line.trim()); return; }
+    const key = MAT_BY_NORM[norm(name)];
+    if (!key) { unused.push(name); return; }
+    if (price) matPrice[key] = price; else delete matPrice[key];
+    done.push(key);
+  });
+  store("crafting-mat-prices", matPrice);
+  grid.querySelectorAll("input").forEach(inp => { inp.value = matPrice[inp.dataset.mat] || ""; });
+  render();
+  const left = MAT_ORDER.filter(k => !matPrice[k]);
+  const parts = [done.length ? `${done.length} ${done.length === 1 ? "preço atualizado" : "preços atualizados"}.` : "Nenhum preço atualizado."];
+  if (unused.length) parts.push(`Não usados nos acessórios: ${unused.join(", ")}.`);
+  if (bad.length) parts.push(`Linhas que não percebi: ${bad.join(" | ")}.`);
+  if (left.length) parts.push(`Ainda sem preço: ${left.join(", ")}.`);
+  document.getElementById("import-result").textContent = parts.join(" ");
+}
+document.getElementById("import-btn").addEventListener("click", () => {
+  const ta = document.getElementById("import-text");
+  if (!ta.value.trim()) { document.getElementById("import-result").textContent = "Cola primeiro a lista na caixa, uma linha por material."; ta.focus(); return; }
+  importPrices(ta.value);
+});
+document.getElementById("import-file").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { document.getElementById("import-text").value = r.result; importPrices(String(r.result)); };
+  r.readAsText(f);
+  e.target.value = "";
 });
 
 let toastT;
