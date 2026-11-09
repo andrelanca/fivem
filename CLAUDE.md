@@ -34,7 +34,7 @@ For deployment problems use the `paas-deploy` skill.
 Site estático em `public/`, servido por nginx (ver `Dockerfile`).
 
 - `public/index.html`: painel de ferramentas (a página inicial).
-- `public/<ferramenta>/index.html`: cada ferramenta na sua pasta (ex.: `public/crafting/`).
+- `public/<ferramenta>/index.html`: cada ferramenta na sua pasta (ex.: `public/crafting/`, `public/armas/`).
 - `public/tokens.css` e `public/base.css`: cores, tipos e regras base partilhados por todas as páginas.
 
 Para juntar uma ferramenta: cria `public/<nome>/index.html` (importa `../tokens.css` e `../base.css`,

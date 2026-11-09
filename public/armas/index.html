@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Craft de Armas</title>
+<meta name="description" content="Escolhe quantas armas queres fazer e vê os blueprints, as peças e o preço que tens de reunir.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans+Extra+Condensed:wght@200;400&family=Barlow:wght@300;400;500&display=swap">
+<style>
+/* Hallmark · shape: app screen · genre: atmospheric · theme: Darkroom (deal 3/3, seed crafting-price-calculator-fivem-9103·8ad352fc·2026-11-08·r0) · redesign: full
+ * nav: top bar with the path back to Ferramentas · signature: the lista a reunir, a sticky panel that turns weapon quantities into blueprints, peças and the price · states: empty list, weapons chosen · darkroom: amber
+ * axes: dark/display-condensed/chromatic-amber · posture: restrained · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V3 · weakest: V, it shares the crafting screen on purpose so both tools read as one app */
+@import url("../tokens.css");
+@import url("../base.css");
+
+:root {
+  --text-figure: clamp(3rem, 2rem + 4vw, 5.5rem);
+  --text-figure-s: 2rem;
+  --row-hover: color-mix(in oklab, var(--color-ink) 4%, transparent);
+  --scrim: color-mix(in oklab, var(--color-paper) 70%, transparent);
+  --bar-h: 64px;
+}
+
+body { font-size: 1.0625rem; }
+.shell { max-width: var(--container); margin-inline: auto; padding-left: max(var(--gutter), env(safe-area-inset-left, 0px)); padding-right: max(var(--gutter), env(safe-area-inset-right, 0px)); }
+
+/* top bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: var(--z-sticky-nav); background: var(--color-paper); border-bottom: var(--rule-hair) solid var(--color-rule); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: var(--z-sticky-nav); background: var(--color-paper); }
+.bar-in { min-height: var(--bar-h); display: flex; align-items: center; gap: var(--space-lg); flex-wrap: wrap; padding-block: var(--space-xs); }
+.mark { font-family: var(--font-display); font-weight: 400; font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; letter-spacing: var(--tracking-display); color: var(--color-ink); text-decoration: none; }
+.crumbs { display: flex; align-items: baseline; gap: var(--space-xs); }
+.crumb { color: var(--color-muted); text-decoration: none; font-size: var(--text-sm); }
+.crumb:hover { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-accent); }
+.crumbs .sep { color: var(--color-rule); }
+.views { display: flex; gap: var(--space-lg); }
+.views a { color: var(--color-muted); text-decoration: none; padding-block: var(--space-xs); border-bottom: 2px solid transparent; }
+.views a:hover { color: var(--color-ink); }
+.views a[aria-current="page"] { color: var(--color-ink); border-bottom-color: var(--color-accent); }
+
+/* inputs and controls */
+.field { height: 40px; padding-inline: var(--space-sm); border: var(--rule-hair) solid var(--color-muted); border-radius: 0; background: var(--color-paper); color: var(--color-ink); font-size: 1rem; }
+.field::placeholder { color: var(--color-muted); }
+.field:hover { border-color: var(--color-ink-2); }
+.field:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); margin-bottom: var(--space-lg); }
+.toolbar .tabs { margin-bottom: 0; min-width: 0; max-width: 100%; }
+#search { flex: 1 1 14rem; min-width: 0; max-width: 22rem; }
+
+.btn { min-height: 40px; padding: 0 var(--space-lg); border: var(--rule-hair) solid var(--color-ink); border-radius: 0; background: transparent; color: var(--color-ink); font: 400 var(--text-lg)/1 var(--font-display); text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+.btn:hover { background: var(--row-hover); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn--primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+.btn--primary:hover { background: var(--color-ink); border-color: var(--color-ink); }
+.link { background: none; border: 0; padding: 0; color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-rule); text-underline-offset: 0.2em; cursor: pointer; font: inherit; }
+.link:hover { text-decoration-color: var(--color-accent); }
+
+/* switch */
+.switch { display: flex; align-items: center; gap: var(--space-sm); min-height: 44px; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch .track { width: 44px; height: 24px; border: var(--rule-hair) solid var(--color-muted); position: relative; flex: none; transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out); }
+.switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: var(--color-ink-2); transition: transform var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out); }
+.switch:hover .track { border-color: var(--color-ink); }
+.switch input:checked + .track { background: var(--color-accent); border-color: var(--color-accent); }
+.switch input:checked + .track::after { transform: translateX(20px); background: var(--color-accent-ink); }
+.switch input:focus-visible + .track { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.switch .s-sub { display: block; color: var(--color-muted); font-size: var(--text-sm); }
+
+/* layout */
+.work { display: grid; grid-template-columns: minmax(0, 1fr) 24rem; gap: var(--space-xl); align-items: start; padding-block: var(--space-xl) var(--space-3xl); }
+@media (max-width: 68rem) { .work { grid-template-columns: minmax(0, 1fr); } .ficha.grained { position: relative; top: auto; } }
+.dock { display: none; }
+@media (max-width: 68rem) {
+  .dock { display: flex; position: fixed; inset: auto 0 0; z-index: var(--z-sticky); align-items: center; justify-content: space-between; gap: var(--space-md); padding: var(--space-xs) max(var(--gutter), env(safe-area-inset-right, 0px)) calc(var(--space-xs) + env(safe-area-inset-bottom, 0px)) max(var(--gutter), env(safe-area-inset-left, 0px)); background: var(--color-paper-2); border-top: var(--rule-hair) solid var(--color-rule); }
+  .dock .lbl { color: var(--color-muted); font-size: var(--text-sm); display: block; }
+  .dock .figure { font-size: var(--text-figure-s); font-variant-numeric: tabular-nums; }
+  main.shell { padding-bottom: 88px; }
+}
+
+.tabs { display: flex; gap: var(--space-xs); overflow-x: auto; scrollbar-width: none; margin-bottom: var(--space-lg); }
+.tabs button { flex: none; min-height: 40px; padding: 0 var(--space-md); border: var(--rule-hair) solid var(--color-rule); border-radius: 0; background: transparent; color: var(--color-muted); font: 400 var(--text-lg)/1 var(--font-display); text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: var(--space-xs); transition: color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+.tabs button:hover { color: var(--color-ink); border-color: var(--color-muted); }
+.tabs button:active { transform: translateY(1px); }
+.tabs button[aria-selected="true"] { color: var(--color-ink); border-color: var(--color-ink); }
+.tabs .n { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-accent); font-variant-numeric: tabular-nums; text-transform: none; }
+
+/* the sheet */
+.sheet { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.sheet th { text-align: left; font-weight: 400; font-size: var(--text-sm); color: var(--color-muted); padding: var(--space-xs) var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); white-space: nowrap; }
+.sheet th.num, .sheet td.num { text-align: right; }
+.sheet td { padding: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); vertical-align: middle; }
+.sheet tbody.group tr.ghead td { padding-top: var(--space-xl); border-bottom-color: var(--color-muted); }
+.sheet h2 { font-weight: 400; font-size: var(--text-3xl); max-width: none; }
+.sheet tr.item:hover { background: var(--row-hover); }
+.sheet tr.item.on { background: var(--color-paper-2); }
+.sheet .name { font-weight: 500; color: var(--color-ink); }
+.sheet .guns, .sheet .mats { color: var(--color-muted); font-size: var(--text-sm); }
+.sheet td.price { color: var(--color-ink-2); white-space: nowrap; }
+.sheet td.price.sem { color: var(--color-ink); }
+.sheet td.qcell { width: 1%; white-space: nowrap; }
+
+.qty { display: inline-flex; align-items: stretch; }
+.qty button { width: 40px; height: 40px; border: var(--rule-hair) solid var(--color-muted); border-radius: 0; background: transparent; color: var(--color-ink); font: 400 1.25rem/1 var(--font-body); cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out); }
+.qty button:hover { background: var(--row-hover); }
+.qty button:active { transform: translateY(1px); }
+.qty button:disabled { opacity: 0.55; cursor: not-allowed; }
+.qty input { width: 56px; height: 40px; border: var(--rule-hair) solid var(--color-muted); border-inline: 0; border-radius: 0; background: var(--color-paper); color: var(--color-ink); text-align: center; font: 400 var(--text-xl)/1 var(--font-display); font-variant-numeric: tabular-nums; -moz-appearance: textfield; }
+.qty input::-webkit-inner-spin-button, .qty input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.qty input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+tr.on .qty input { color: var(--color-accent); }
+.no-hit { padding-block: var(--space-xl); color: var(--color-muted); }
+
+@media (max-width: 48rem) {
+  .sheet thead { display: none; }
+  .sheet tr.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2xs) var(--space-md); padding: var(--space-sm) 0; border-bottom: var(--rule-hair) solid var(--color-rule); }
+  .sheet tr.item td { border: 0; padding: 0; }
+  .sheet tr.item td.desc { grid-column: 1; }
+  .sheet tr.item td.qcell { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  .sheet tr.item td.price { grid-column: 1; text-align: left; font-size: var(--text-sm); }
+  .sheet tr.item td.price::before { content: attr(data-label) " "; color: var(--color-muted); }
+  .sheet tr.item td.mats { grid-column: 1; }
+  .sheet tr.ghead td { display: block; padding-inline: 0; }
+}
+
+/* the ficha */
+.ficha { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--bar-h) + var(--space-lg)); background: var(--color-paper-2); padding: var(--space-lg); display: grid; gap: var(--space-lg); }
+.grained { position: relative; isolation: isolate; }
+.grained::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: var(--grain); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 9 -4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E") 0 0 / 200px 200px; }
+.ficha.grained { position: sticky; }
+.ficha h2 { font-weight: 400; font-size: var(--text-3xl); }
+.sheet h2, .ficha h2, .precos h2 { text-transform: uppercase; }
+.ficha h3 { font-family: var(--font-body); font-weight: 400; font-size: var(--text-sm); color: var(--color-muted); text-transform: none; letter-spacing: 0; line-height: 1.4; margin-bottom: var(--space-xs); }
+.ficha-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); padding-bottom: var(--space-sm); }
+.ficha-head .units { color: var(--color-muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.big .lbl { color: var(--color-muted); font-size: var(--text-sm); }
+.figure { font-family: var(--font-display); font-weight: 200; line-height: 0.95; letter-spacing: var(--tracking-display); font-variant-numeric: tabular-nums; }
+.big .figure { font-size: var(--text-figure); color: var(--color-ink); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.rows { display: grid; }
+.rows > div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); padding-block: var(--space-xs); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.rows dt { color: var(--color-muted); font-size: var(--text-sm); }
+.rows dd { margin: 0; font-size: var(--text-figure-s); }
+.rows dd.pos { color: var(--color-success); }
+.rows dd.neg { color: var(--color-error); }
+.list { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: var(--text-sm); }
+.list th { text-align: left; font-weight: 400; color: var(--color-muted); padding: 0 0 var(--space-2xs); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.list td { padding: var(--space-2xs) 0; border-bottom: var(--rule-hair) solid var(--color-rule); }
+.list .num { text-align: right; }
+.list td.dim { color: var(--color-muted); }
+.empty { color: var(--color-muted); font-size: var(--text-sm); }
+.note { color: var(--color-muted); font-size: var(--text-sm); margin-top: var(--space-xs); }
+.actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
+.actions .btn { flex: 1; }
+a.btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.toast { min-height: 1lh; color: var(--color-accent); font-size: var(--text-sm); }
+
+/* prices view */
+.precos { padding-block: var(--space-xl) var(--space-3xl); max-width: 44rem; display: grid; gap: var(--space-lg); }
+.precos h2 { font-size: var(--text-3xl); font-weight: 400; }
+.precos .lead-s { color: var(--color-ink-2); max-width: 52ch; }
+.import { display: grid; gap: var(--space-sm); padding: var(--space-lg); background: var(--color-paper-2); }
+.import label.t { font-size: var(--text-sm); color: var(--color-ink-2); }
+.import textarea.field { height: auto; min-height: 8rem; padding: var(--space-sm); font: 400 var(--text-md)/1.5 var(--font-body); resize: vertical; width: 100%; }
+.import .actions { justify-content: flex-start; }
+.import .actions .btn { flex: 0 1 auto; }
+label.btn { display: inline-flex; align-items: center; justify-content: center; }
+.import .result { min-height: 1lh; font-size: var(--text-sm); color: var(--color-ink-2); }
+.warn { padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-error); color: var(--color-ink); font-size: var(--text-sm); max-width: 60ch; }
+.sheet-p { border-top: var(--rule-hair) solid var(--color-muted); }
+.sheet-p label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2xs) var(--space-lg); padding-block: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); cursor: pointer; }
+.sheet-p .m { font-family: var(--font-display); font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; }
+.sheet-p .u { grid-column: 1; color: var(--color-muted); font-size: var(--text-sm); }
+.sheet-p .field { grid-column: 2; grid-row: 1 / span 2; width: 9rem; text-align: right; font: 400 var(--text-xl)/1 var(--font-display); font-variant-numeric: tabular-nums; }
+@media (max-width: 40rem) { #search { max-width: none; flex-basis: 100%; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="shell bar-in">
+    <nav class="crumbs" aria-label="Caminho">
+      <a class="crumb" href="../">Ferramentas</a>
+      <span class="sep" aria-hidden="true">/</span>
+      <a class="mark" href="#" aria-label="Craft de Armas, início">Armas</a>
+    </nav>
+  </div>
+</header>
+
+<main class="shell">
+  <h1 class="visually-hidden">Craft de Armas</h1>
+  <div class="work">
+    <div id="list"></div>
+
+    <aside class="ficha" aria-labelledby="ficha-title">
+      <div class="ficha-head"><h2 id="ficha-title">A reunir</h2><span class="units" id="units">0 armas</span></div>
+      <div class="big" aria-live="polite">
+        <div class="lbl">Preço total</div>
+        <div class="figure" id="t-price">0 €</div>
+      </div>
+      <div>
+        <h3>Blueprints</h3>
+        <div id="bps"></div>
+      </div>
+      <div>
+        <h3>Peças</h3>
+        <div id="parts"></div>
+      </div>
+      <div>
+        <h3>Armas</h3>
+        <div id="sel"></div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn--primary" id="copy">Copiar lista</button>
+        <button type="button" class="btn" id="reset">Limpar</button>
+      </div>
+      <p class="toast" id="toast" role="status"></p>
+    </aside>
+  </div>
+</main>
+
+<div class="dock" id="dock">
+  <div><span class="lbl">Preço total, <span id="d-units">0 armas</span></span><span class="figure" id="d-price">0 €</span></div>
+  <a class="btn" href="#ficha-title">Ver lista</a>
+</div>
+
+<script>
+// Tabela de armas: blueprints [quantidade, tipo], peças [quantidade, tipo], preço em €
+const WEAPONS = [
+  { n: "Vintage",   bp: [3, "Pistol"],  pc: [15, "Básicas"],     p: 20000 },
+  { n: ".50",       bp: [10, "Pistol"], pc: [50, "Básicas"],     p: 70000 },
+  { n: "Ranger 12", bp: [5, "Pistol"],  pc: [25, "Básicas"],     p: 30000 },
+  { n: "APP",       bp: [8, "Pistol"],  pc: [40, "Básicas"],     p: 55000 },
+  { n: "Thompson",  bp: [6, "SMG"],     pc: [45, "Avançadas"],   p: 72000 },
+  { n: "PDW",       bp: [15, "SMG"],    pc: [75, "Avançadas"],   p: 100000 },
+  { n: "SPAS-12",   bp: [6, "Rifle"],   pc: [30, "Avançadas"],   p: 40000 },
+  { n: "Military",  bp: [22, "Rifle"],  pc: [110, "Avançadas"],  p: 144000 },
+  { n: "Famas",     bp: [24, "Rifle"],  pc: [120, "Avançadas"],  p: 160000 },
+  { n: "TAR-21",    bp: [24, "Rifle"],  pc: [120, "Avançadas"],  p: 160000 },
+];
+const BP_ORDER = ["Pistol", "SMG", "Rifle"];
+const PC_ORDER = ["Básicas", "Avançadas"];
+WEAPONS.forEach((w, i) => { w.key = "w" + i; });
+
+const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const eur = n => fmt(n) + " €";
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+const load = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let qty = load("armas-qty", {}) || {};
+
+const list = document.getElementById("list");
+list.innerHTML = `<table class="sheet">
+  <thead><tr><th>Arma</th><th class="num">Blueprints</th><th class="num">Peças</th><th class="num">Preço</th><th class="num">Quantidade</th></tr></thead>
+  ${BP_ORDER.map(t => `<tbody class="group">
+    <tr class="ghead"><td colspan="5"><h2>${t}</h2></td></tr>
+    ${WEAPONS.filter(w => w.bp[1] === t).map(w => `<tr class="item" data-key="${w.key}">
+      <td class="desc"><div class="name">${esc(w.n)}</div></td>
+      <td class="num price" data-label="Blueprints">${w.bp[0]} ${w.bp[1]}</td>
+      <td class="num price" data-label="Peças">${w.pc[0]} ${w.pc[1]}</td>
+      <td class="num price sem" data-label="Preço">${eur(w.p)}</td>
+      <td class="num qcell"><div class="qty">
+        <button type="button" data-d="-1" aria-label="Menos ${esc(w.n)}">−</button>
+        <input type="number" min="0" step="1" inputmode="numeric" name="q-${w.key}" id="q-${w.key}" aria-label="Quantidade ${esc(w.n)}">
+        <button type="button" data-d="1" aria-label="Mais ${esc(w.n)}">+</button>
+      </div></td>
+    </tr>`).join("")}
+  </tbody>`).join("")}
+</table>`;
+
+const table = (rows) => `<table class="list"><tbody>${rows.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="num">${b}</td></tr>`).join("")}</tbody></table>`;
+
+function render() {
+  const bp = {}, pc = {}; let price = 0, units = 0; const sel = [];
+  WEAPONS.forEach(w => {
+    const q = qty[w.key] || 0;
+    const row = list.querySelector(`[data-key="${w.key}"]`);
+    row.classList.toggle("on", q > 0);
+    row.querySelector('button[data-d="-1"]').disabled = q === 0;
+    const inp = document.getElementById("q-" + w.key);
+    if (document.activeElement !== inp) inp.value = q || "";
+    if (!q) return;
+    units += q; price += w.p * q;
+    bp[w.bp[1]] = (bp[w.bp[1]] || 0) + w.bp[0] * q;
+    pc[w.pc[1]] = (pc[w.pc[1]] || 0) + w.pc[0] * q;
+    sel.push({ w, q });
+  });
+  const u = units + (units === 1 ? " arma" : " armas");
+  document.getElementById("units").textContent = u;
+  document.getElementById("d-units").textContent = u;
+  document.getElementById("t-price").textContent = eur(price);
+  document.getElementById("d-price").textContent = eur(price);
+  const bk = BP_ORDER.filter(k => bp[k]), pk = PC_ORDER.filter(k => pc[k]);
+  const empty = `<p class="empty">Nada por agora. Usa o + numa arma da tabela.</p>`;
+  document.getElementById("bps").innerHTML = bk.length ? table(bk.map(k => [k, fmt(bp[k])])) : empty;
+  document.getElementById("parts").innerHTML = pk.length ? table(pk.map(k => [k, fmt(pc[k])])) : `<p class="empty">Sem peças.</p>`;
+  document.getElementById("sel").innerHTML = sel.length ? table(sel.map(s => [s.w.n, s.q + "×"])) : `<p class="empty">Sem armas.</p>`;
+  store("armas-qty", qty);
+  return { bp, pc, bk, pk, price, sel };
+}
+
+list.addEventListener("click", e => {
+  const b = e.target.closest("button[data-d]"); if (!b) return;
+  const key = b.closest("tr").dataset.key;
+  qty[key] = Math.max(0, (qty[key] || 0) + Number(b.dataset.d) * (e.shiftKey ? 10 : 1));
+  render();
+});
+list.addEventListener("input", e => {
+  if (!e.target.matches(".qty input")) return;
+  qty[e.target.closest("tr").dataset.key] = Math.max(0, Math.floor(Number(e.target.value) || 0));
+  render();
+});
+list.addEventListener("focusout", e => { if (e.target.matches(".qty input")) render(); });
+
+let toastT;
+const toast = t => { const el = document.getElementById("toast"); el.textContent = t; clearTimeout(toastT); toastT = setTimeout(() => { el.textContent = ""; }, 2500); };
+document.getElementById("reset").addEventListener("click", () => { qty = {}; render(); toast("Lista limpa."); });
+document.getElementById("copy").addEventListener("click", () => {
+  const r = render();
+  if (!r.sel.length) { toast("A lista está vazia, não há nada para copiar."); return; }
+  const txt = [
+    "ARMAS", ...r.sel.map(s => `- ${s.q}x ${s.w.n}`), "",
+    "BLUEPRINTS", ...r.bk.map(k => `- ${fmt(r.bp[k])} ${k}`), "",
+    "PEÇAS", ...r.pk.map(k => `- ${fmt(r.pc[k])} ${k}`), "",
+    `Preço total: ${eur(r.price)}`
+  ].join("\n");
+  navigator.clipboard.writeText(txt).then(() => toast("Lista copiada."), () => toast("Este browser não deixou copiar. Tenta noutro browser."));
+});
+
+render();
+</script>
+</body>
+</html>
