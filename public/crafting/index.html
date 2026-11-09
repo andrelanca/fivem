@@ -169,6 +169,7 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .import .actions .btn { flex: 0 1 auto; }
 label.btn { display: inline-flex; align-items: center; justify-content: center; }
 .import .result { min-height: 1lh; font-size: var(--text-sm); color: var(--color-ink-2); }
+.warn { padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-error); color: var(--color-ink); font-size: var(--text-sm); max-width: 60ch; }
 .sheet-p { border-top: var(--rule-hair) solid var(--color-muted); }
 .sheet-p label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2xs) var(--space-lg); padding-block: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); cursor: pointer; }
 .sheet-p .m { font-family: var(--font-display); font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; }
@@ -242,6 +243,7 @@ label.btn { display: inline-flex; align-items: center; justify-content: center; 
   <section id="view-precos" class="precos" aria-labelledby="precos-title" hidden>
     <h2 id="precos-title">Preços dos materiais</h2>
     <p class="lead-s">Preço por unidade. Guarda sozinho neste browser e entra no custo dos materiais da ficha.</p>
+    <p class="warn" id="storage-warn" role="alert" hidden>Este browser não está a deixar guardar dados desta página (janela privada, cookies bloqueados ou pré-visualização). Os preços funcionam até fechares ou recarregares a página. Abre o site normal, fivem.andrelanca.com, numa janela normal para ficarem guardados.</p>
     <div class="import">
       <label class="t" for="import-text">Importar lista: uma linha por material, no formato Material,Preço</label>
       <textarea class="field" id="import-text" name="import-text" rows="6" spellcheck="false" placeholder="Alumínio,2000.00&#10;Plástico,1800.00&#10;Restos Eletrónicos,1500.00"></textarea>
@@ -314,6 +316,7 @@ const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 
 let qty = load("crafting-qty", {}) || {};
 let matPrice = load("crafting-mat-prices", {}) || {};
+const storageOk = (() => { try { const k = "crafting-test"; localStorage.setItem(k, "1"); const ok = localStorage.getItem(k) === "1"; localStorage.removeItem(k); return ok; } catch (e) { return false; } })();
 let dirty = load("crafting-dirty", false) === true;
 let cat = "todos";
 const DIRTY = 1.15;
@@ -524,6 +527,7 @@ function route() {
   }
 }
 window.addEventListener("hashchange", route);
+document.getElementById("storage-warn").hidden = storageOk;
 
 // Exemplo inicial (100 kevs + 3 heavy barrel) só quando ainda não há nada guardado
 if (!Object.values(qty).some(Boolean)) qty = { "kevs-0": 100, "mk2-0": 3 };
