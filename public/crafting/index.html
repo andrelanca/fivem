@@ -205,7 +205,6 @@ label.btn { display: inline-flex; align-items: center; justify-content: center; 
           <div><dt>Blip</dt><dd class="figure" id="t-blip">0</dd></div>
           <div><dt>Custo dos materiais</dt><dd class="figure" id="t-cost">0</dd></div>
           <div><dt>Custo dos materiais +15%</dt><dd class="figure" id="t-cost15">0</dd></div>
-          <div><dt>Total, Blip + materiais</dt><dd class="figure" id="t-total">0</dd></div>
           <div><dt>Total sujo</dt><dd class="figure" id="t-sujo">0</dd></div>
         </dl>
         <div>
@@ -361,7 +360,7 @@ function render() {
   const mk = MAT_ORDER.filter(k => mats[k]);
   const cost = mk.reduce((s, k) => s + mats[k] * (matPrice[k] || 0), 0);
   const cost15 = cost * MAT_MARKUP;
-  const total = blip + cost, total15 = blip + cost15;
+  const total15 = blip + cost15;
   document.getElementById("units").textContent = units + (units === 1 ? " item" : " itens");
   document.getElementById("t-total15").textContent = fmt(total15);
   document.getElementById("d-total15").textContent = fmt(total15);
@@ -369,7 +368,6 @@ function render() {
   document.getElementById("t-blip").textContent = fmt(blip);
   document.getElementById("t-cost").textContent = fmt(cost);
   document.getElementById("t-cost15").textContent = fmt(cost15);
-  document.getElementById("t-total").textContent = fmt(total);
   document.getElementById("t-sujo").textContent = fmt(total15);
   document.getElementById("mats").innerHTML = mk.length
     ? `<table class="list"><thead><tr><th>Material</th><th class="num">Quantidade</th><th class="num">Custo</th></tr></thead><tbody>${mk.map(k => `<tr><td>${esc(k)}</td><td class="num">${fmt(mats[k])}</td><td class="num${matPrice[k] ? "" : " dim"}">${matPrice[k] ? fmt(mats[k] * matPrice[k]) : "sem preço"}</td></tr>`).join("")}</tbody></table>`
@@ -382,7 +380,7 @@ function render() {
     ? `<table class="list"><tbody>${sel.map(s => `<tr><td>${esc(s.it.n)} <span class="empty">${esc(s.it.cat.name)}</span></td><td class="num">${s.q}×</td></tr>`).join("")}</tbody></table>`
     : `<p class="empty">Sem itens.</p>`;
   store("crafting-qty", qty);
-  return { mats, mk, blip, sel, cost, cost15, total, total15 };
+  return { mats, mk, blip, sel, cost, cost15, total15 };
 }
 
 // cada separador tem a sua própria pesquisa
