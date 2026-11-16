@@ -206,6 +206,7 @@ label.btn { display: inline-flex; align-items: center; justify-content: center; 
           <div><dt>Custo dos materiais</dt><dd class="figure" id="t-cost">0</dd></div>
           <div><dt>Custo dos materiais +15%</dt><dd class="figure" id="t-cost15">0</dd></div>
           <div><dt>Total, Blip + materiais</dt><dd class="figure" id="t-total">0</dd></div>
+          <div><dt>Total sujo</dt><dd class="figure" id="t-sujo">0</dd></div>
         </dl>
         <div>
           <h3>Materiais necessários</h3>
@@ -369,6 +370,7 @@ function render() {
   document.getElementById("t-cost").textContent = fmt(cost);
   document.getElementById("t-cost15").textContent = fmt(cost15);
   document.getElementById("t-total").textContent = fmt(total);
+  document.getElementById("t-sujo").textContent = fmt(total15);
   document.getElementById("mats").innerHTML = mk.length
     ? `<table class="list"><thead><tr><th>Material</th><th class="num">Quantidade</th><th class="num">Custo</th></tr></thead><tbody>${mk.map(k => `<tr><td>${esc(k)}</td><td class="num">${fmt(mats[k])}</td><td class="num${matPrice[k] ? "" : " dim"}">${matPrice[k] ? fmt(mats[k] * matPrice[k]) : "sem preço"}</td></tr>`).join("")}</tbody></table>`
     : `<p class="empty">A ficha está vazia. Usa o + numa linha da tabela para juntar acessórios ou kevlar.</p>`;
