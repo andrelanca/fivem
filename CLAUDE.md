@@ -13,7 +13,10 @@ Live at: **https://fivem.andrelanca.com**
 
 ## Shipping
 
-`git push` to `main`. Live within a couple of minutes. Verify from outside:
+`git push` to `main`. Live within a couple of minutes.
+
+**Regra do dono do repo:** todo o trabalho vai sempre para `main`, sem perguntar. Se a sessão
+trabalhar noutro branch, faz merge/push para `main` no fim de cada alteração. Verify from outside:
 
 ```bash
 curl -sI https://fivem.andrelanca.com
