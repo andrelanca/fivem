@@ -36,10 +36,30 @@ For deployment problems use the `paas-deploy` skill.
 
 Site estático em `public/`, servido por nginx (ver `Dockerfile`).
 
-- `public/index.html`: painel de ferramentas (a página inicial).
-- `public/<ferramenta>/index.html`: cada ferramenta na sua pasta (ex.: `public/crafting/`, `public/armas/`).
-- `public/tokens.css` e `public/base.css`: cores, tipos e regras base partilhados por todas as páginas.
+- `public/index.html`: painel de ferramentas (a página inicial), uma linha `<li class="tool">` por ferramenta.
+- `public/tokens.css` e `public/base.css`: cores, tipos e regras base.
+- `public/craft.css`: o layout de todas as ferramentas (topo, tabela, separadores, ficha, dock).
+- `public/craft.js`: o motor das ferramentas de craft. Desenha a página toda a partir de `window.CRAFT`.
+- `public/<ferramenta>/index.html`: cada craft é **só a config** (`window.CRAFT`): grupos, itens, materiais, preços, textos.
+  Ex.: `public/balas/`, `public/pecas/`, `public/armas/`.
+- `public/crafting/` (acessórios) é a exceção: tem lógica própria (Blip, preços dos materiais), mas usa o `craft.css`.
 
-Para juntar uma ferramenta: cria `public/<nome>/index.html` (importa `../tokens.css` e `../base.css`,
-e põe no topo o caminho `Ferramentas / <Nome>` com link para `../`), depois junta uma linha `<li class="tool">`
-no painel, só com o título.
+### Juntar um craft novo
+
+```bash
+scripts/novo-craft.sh <pasta> "Craft de X" "X"
+```
+
+Isto cria `public/<pasta>/index.html` a partir de `scripts/modelo.html` e junta a linha no painel.
+Depois é só preencher `groups` (e as opções que interessarem; estão todas comentadas no modelo):
+
+```js
+groups: [
+  { name: "Grupo", items: [            // 2+ grupos → separadores automáticos
+    { n: "Nome", m: { "Material": 2 }, p: 1500, out: 2 },  // m por craft, p = dinheiro por craft, out = quanto sai
+  ]},
+]
+```
+
+- Pormenores de uma página (textos, unidades, colunas, separadores) → na config dessa página.
+- Layout/comportamento de todas → `craft.js` / `craft.css`. Não copiar HTML/CSS para as páginas.
