@@ -32,6 +32,7 @@
   const MATS = C.materials || [...new Set(items.flatMap(it => Object.keys(it.m || {})))];
   // até 4 materiais cabe uma coluna por material; acima disso, uma coluna de texto
   const matCols = C.matCols != null ? C.matCols : MATS.length <= 4;
+  const hasMoney = C.showMoney != null ? C.showMoney : items.some(it => it.p); // sem preços → sem coluna nem total de dinheiro
   const tabsOn = C.tabs != null ? C.tabs : groups.length > 1;
   const storeKey = (C.id || location.pathname) + "-qty";
   let qty = load(storeKey, {}) || {};
@@ -58,10 +59,10 @@
     </div>
     <aside class="ficha" aria-labelledby="ficha-title">
       <div class="ficha-head"><h2 id="ficha-title">${esc(fichaTitle)}</h2><span class="units" id="units"></span></div>
-      <div class="big" aria-live="polite">
+      ${hasMoney ? `<div class="big" aria-live="polite">
         <div class="lbl">${esc(money)} total</div>
         <div class="figure" id="t-price">0 €</div>
-      </div>
+      </div>` : ""}
       <div><h3>Materiais</h3><div id="mats"></div></div>
       <div><h3>${esc(outTitle)}</h3><div id="sel"></div></div>
       <div class="actions">
@@ -73,25 +74,25 @@
   </div>
 </main>
 <div class="dock" id="dock">
-  <div><span class="lbl">${esc(money)} total, <span id="d-units"></span></span><span class="figure" id="d-price">0 €</span></div>
+  <div>${hasMoney ? `<span class="lbl">${esc(money)} total, <span id="d-units"></span></span><span class="figure" id="d-price">0 €</span>` : `<span class="lbl">A reunir</span><span class="figure" id="d-units"></span>`}</div>
   <a class="btn" href="#ficha-title">Ver lista</a>
 </div>`;
 
   const list = document.getElementById("list");
-  const cols = 3 + (matCols ? MATS.length : 1);
+  const cols = 2 + (hasMoney ? 1 : 0) + (matCols ? MATS.length : 1);
   const matCells = it => matCols
     ? MATS.map(k => `<td class="num price" data-label="${esc(k)}">${(it.m && it.m[k]) || 0}</td>`).join("")
     : `<td class="mats">${MATS.filter(k => it.m && it.m[k]).map(k => `${it.m[k]} ${esc(k)}`).join(" · ")}</td>`;
   const sub = it => it.sub != null ? it.sub : (it.out > 1 ? `Dá ${it.out} por craft` : "");
 
   list.innerHTML = `<table class="sheet">
-  <thead><tr><th>${esc(C.itemLabel || "Item")}</th>${matCols ? MATS.map(k => `<th class="num">${esc(k)}</th>`).join("") : "<th>Materiais</th>"}<th class="num">${esc(money)}</th><th class="num">${esc(C.qtyLabel || "Quantidade")}</th></tr></thead>
+  <thead><tr><th>${esc(C.itemLabel || "Item")}</th>${matCols ? MATS.map(k => `<th class="num">${esc(k)}</th>`).join("") : "<th>Materiais</th>"}${hasMoney ? `<th class="num">${esc(money)}</th>` : ""}<th class="num">${esc(C.qtyLabel || "Quantidade")}</th></tr></thead>
   ${groups.map(g => `<tbody class="group" data-cat="${g.id}">
     <tr class="ghead"><td colspan="${cols}"><h2>${esc(g.name)}</h2></td></tr>
     ${g.items.map(it => `<tr class="item" data-key="${it.key}">
       <td class="desc"><div class="name">${esc(it.n)}</div>${sub(it) ? `<div class="mats">${esc(sub(it))}</div>` : ""}</td>
       ${matCells(it)}
-      <td class="num price sem" data-label="${esc(money)}">${eur(it.p || 0)}</td>
+      ${hasMoney ? `<td class="num price sem" data-label="${esc(money)}">${eur(it.p || 0)}</td>` : ""}
       <td class="num qcell"><div class="qty">
         <button type="button" data-d="-1" aria-label="Menos ${esc(it.n)}">−</button>
         <input type="number" min="0" step="1" inputmode="numeric" name="q-${it.key}" id="q-${it.key}" aria-label="Quantidade ${esc(it.n)}">
@@ -137,8 +138,10 @@
     const u = plural(units, unit);
     document.getElementById("units").textContent = u;
     document.getElementById("d-units").textContent = u;
-    document.getElementById("t-price").textContent = eur(price);
-    document.getElementById("d-price").textContent = eur(price);
+    if (hasMoney) {
+      document.getElementById("t-price").textContent = eur(price);
+      document.getElementById("d-price").textContent = eur(price);
+    }
     const mk = MATS.filter(k => mats[k]);
     document.getElementById("mats").innerHTML = mk.length ? table(mk.map(k => [esc(k), fmt(mats[k])])) : `<p class="empty">Nada por agora. Usa o + numa linha da tabela.</p>`;
     document.getElementById("sel").innerHTML = sel.length
@@ -169,8 +172,8 @@
     if (!r.sel.length) { toast("A lista está vazia, não há nada para copiar."); return; }
     const txt = [
       C.short.toUpperCase(), ...r.sel.map(s => s.it.out > 1 ? `- ${s.q}x craft ${s.it.n} = ${fmt(s.q * s.it.out)}${outWord ? " " + outWord : ""}` : `- ${s.q}x ${s.it.n}`), "",
-      "MATERIAIS", ...r.mk.map(k => `- ${fmt(r.mats[k])} ${k}`), "",
-      `${money} total: ${eur(r.price)}`
+      "MATERIAIS", ...r.mk.map(k => `- ${fmt(r.mats[k])} ${k}`),
+      ...(hasMoney ? ["", `${money} total: ${eur(r.price)}`] : [])
     ].join("\n");
     navigator.clipboard.writeText(txt).then(() => toast("Lista copiada."), () => toast("Este browser não deixou copiar. Tenta noutro browser."));
   });

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Craft de Siderurgia</title>
+<meta name="description" content="Escolhe quantos lingotes de ferro, aço, bronze e polímero queres fazer e vê os materiais que tens de reunir.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans+Extra+Condensed:wght@200;400&family=Barlow:wght@300;400;500&display=swap">
+<link rel="stylesheet" href="../craft.css">
+</head>
+<body>
+<script>
+// Só dados e textos. Copiado de scripts/modelo.html, que tem todas as opções.
+// O layout está em ../craft.js e ../craft.css (igual em todas as páginas).
+window.CRAFT = {
+  id: "siderurgia",
+  title: "Craft de Siderurgia",
+  short: "Siderurgia",
+  itemLabel: "Material",
+  outTitle: "Recebes",
+  note: "Cada craft dá 1 unidade. O aço leva lingotes de ferro: faz primeiro os lingotes (1 ferro cada).",
+  materials: ["Ferro", "Lingote de ferro", "Carvão", "Cobre", "Estanho", "Petróleo", "Vidro"],
+  groups: [
+    { name: "Siderurgia", items: [
+      { n: "Lingote de ferro", m: { "Ferro": 1 } },
+      { n: "Aço",              m: { "Carvão": 1, "Lingote de ferro": 1 } },
+      { n: "Bronze",           m: { "Cobre": 1, "Estanho": 1 } },
+      { n: "Polímero",         m: { "Carvão": 1, "Petróleo": 1, "Vidro": 1 } },
+    ]},
+  ],
+};
+</script>
+<script src="../craft.js"></script>
+</body>
+</html>
