@@ -147,6 +147,13 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 label.btn { display: inline-flex; align-items: center; justify-content: center; }
 .import .result { min-height: 1lh; font-size: var(--text-sm); color: var(--color-ink-2); }
 .warn { padding: var(--space-sm) var(--space-md); border: var(--rule-hair) solid var(--color-error); color: var(--color-ink); font-size: var(--text-sm); max-width: 60ch; }
+/* crafting: preços do mercado (fivem-market) */
+.market { display: grid; gap: var(--space-sm); padding: var(--space-lg); margin-bottom: var(--space-md); background: var(--color-paper-2); }
+.market .actions { justify-content: flex-start; }
+.market .actions .btn { flex: 0 1 auto; }
+.market .result { min-height: 1lh; font-size: var(--text-sm); color: var(--color-ink-2); }
+.sheet-p .src { color: var(--color-ink-2); }
+.sheet-p .src.off { color: var(--color-muted); }
 .sheet-p { border-top: var(--rule-hair) solid var(--color-muted); }
 .sheet-p label { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-2xs) var(--space-lg); padding-block: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); cursor: pointer; }
 .sheet-p .m { font-family: var(--font-display); font-size: var(--text-2xl); text-transform: uppercase; line-height: 1; }

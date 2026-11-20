@@ -65,3 +65,14 @@ groups: [
 
 - Pormenores de uma página (textos, unidades, colunas, separadores) → na config dessa página.
 - Layout/comportamento de todas → `craft.js` / `craft.css`. Não copiar HTML/CSS para as páginas.
+
+## Ligação ao mercado (fivem-market)
+
+`public/crafting/` → vista *Preços dos materiais* tem o botão **Atualizar do mercado**: faz `fetch` a
+`https://fivem-market.andrelanca.com/api/prices` (JSON público com CORS, gerado pelo repo `andrelanca/fivem-market`)
+e põe o **mínimo** de cada material. Só entram os materiais usados nas receitas (`MAT_ORDER`), comparados pelo nome
+com `norm()` (sem acentos/maiúsculas/plurais). O que o mercado não tem (ex.: Aço) fica com o preço posto à mão.
+Cada material mostra a origem ("mercado, DD/MM" / "posto à mão") — guardada em `localStorage` `crafting-mat-src`;
+editar à mão ou importar texto apaga a origem.
+**Atualiza sozinho ao abrir a página** (`updateFromMarket(true)`), mas não mexe nos preços postos à mão
+(`localStorage` `crafting-mat-manual`); o botão atualiza todos, incluindo esses. Material novo numa receita: se o nome bater com o do mercado, entra sozinho.

@@ -71,6 +71,10 @@
     <h2 id="precos-title">Preços dos materiais</h2>
     <p class="lead-s">Preço por unidade. Guarda sozinho neste browser e entra no custo dos materiais da ficha.</p>
     <p class="warn" id="storage-warn" role="alert" hidden>Este browser não está a deixar guardar dados desta página (janela privada, cookies bloqueados ou pré-visualização). Os preços funcionam até fechares ou recarregares a página. Abre o site normal, fivem.andrelanca.com, numa janela normal para ficarem guardados.</p>
+    <div class="market">
+      <div class="actions"><button type="button" class="btn btn--primary" id="market-btn">Atualizar do mercado</button></div>
+      <p class="result" id="market-result" role="status">Ao abrir a página vai buscar sozinho o preço mais baixo de cada material ao <a class="link" href="https://fivem-market.andrelanca.com" target="_blank" rel="noopener">mercado</a>. Os materiais que o mercado não tem ficam com o preço que puseste à mão.</p>
+    </div>
     <div class="import">
       <label class="t" for="import-text">Importar lista: uma linha por material, no formato Material,Preço</label>
       <textarea class="field" id="import-text" name="import-text" rows="6" spellcheck="false" placeholder="Alumínio,2000.00&#10;Plástico,1800.00&#10;Restos Eletrónicos,1500.00"></textarea>
@@ -143,6 +147,9 @@ const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 
 let qty = load("crafting-qty", {}) || {};
 let matPrice = load("crafting-mat-prices", {}) || {};
+let matSrc = load("crafting-mat-src", {}) || {}; // material → dia do mercado de onde veio o preço (sem entrada = posto à mão)
+let matManual = load("crafting-mat-manual", null); // materiais com preço posto à mão: a atualização automática não lhes toca
+if (!Array.isArray(matManual)) matManual = []; // antes desta versão os preços eram colados do mercado → nada conta como à mão
 const storageOk = (() => { try { const k = "crafting-test"; localStorage.setItem(k, "1"); const ok = localStorage.getItem(k) === "1"; localStorage.removeItem(k); return ok; } catch (e) { return false; } })();
 let cat = "todos";
 const MAT_MARKUP = 1.15; // os materiais são a dinheiro limpo: +15% na ficha
@@ -175,7 +182,7 @@ list.innerHTML = `<table class="sheet">
 
 const usedIn = k => items.filter(it => it.m[k]).length;
 document.getElementById("prices-grid").innerHTML = MAT_ORDER.map((k, i) => `
-  <label for="mp-${i}"><span class="m">${esc(k)}</span><span class="u">Usado em ${usedIn(k)} ${usedIn(k) === 1 ? "item" : "itens"}</span>
+  <label for="mp-${i}"><span class="m">${esc(k)}</span><span class="u">Usado em ${usedIn(k)} ${usedIn(k) === 1 ? "item" : "itens"} · <span class="src" id="src-${i}"></span></span>
   <input class="field" type="number" min="0" step="any" inputmode="decimal" name="mp-${i}" id="mp-${i}" data-mat="${esc(k)}" placeholder="0"></label>`).join("");
 
 function render() {
@@ -269,7 +276,10 @@ grid.addEventListener("input", e => {
   const inp = e.target.closest("input[data-mat]"); if (!inp) return;
   const v = Math.max(0, Number(inp.value) || 0);
   if (v) matPrice[inp.dataset.mat] = v; else delete matPrice[inp.dataset.mat];
-  store("crafting-mat-prices", matPrice);
+  delete matSrc[inp.dataset.mat];
+  setManual(inp.dataset.mat, !!v);
+  store("crafting-mat-prices", matPrice); store("crafting-mat-src", matSrc);
+  showSrc();
   render();
 });
 
@@ -295,10 +305,12 @@ function importPrices(text) {
     const key = MAT_BY_NORM[norm(name)];
     if (!key) { unused.push(name); return; }
     if (price) matPrice[key] = price; else delete matPrice[key];
+    delete matSrc[key];
+    setManual(key, !!price);
     done.push(key);
   });
-  store("crafting-mat-prices", matPrice);
-  grid.querySelectorAll("input").forEach(inp => { inp.value = matPrice[inp.dataset.mat] || ""; });
+  store("crafting-mat-prices", matPrice); store("crafting-mat-src", matSrc);
+  fillGrid();
   render();
   const left = MAT_ORDER.filter(k => !matPrice[k]);
   const parts = [done.length ? `${done.length} ${done.length === 1 ? "preço atualizado" : "preços atualizados"}.` : "Nenhum preço atualizado."];
@@ -320,6 +332,57 @@ document.getElementById("import-file").addEventListener("change", e => {
   e.target.value = "";
 });
 
+// Preços do mercado (fivem-market). Só entram os materiais usados nos acessórios; comparam-se pelo nome
+// (norm), por isso um material novo no mercado com o mesmo nome entra sozinho. O que o mercado não tem fica à mão.
+const MARKET_URL = "https://fivem-market.andrelanca.com/api/prices";
+const dm = d => d ? d.slice(8, 10) + "/" + d.slice(5, 7) : "";
+function fillGrid() { grid.querySelectorAll("input").forEach(inp => { inp.value = matPrice[inp.dataset.mat] || ""; }); showSrc(); }
+function showSrc() {
+  MAT_ORDER.forEach((k, i) => {
+    const el = document.getElementById("src-" + i);
+    el.textContent = matSrc[k] ? "mercado, " + dm(matSrc[k]) : matPrice[k] ? "posto à mão" : "sem preço";
+    el.className = "src" + (matSrc[k] ? "" : " off");
+  });
+}
+function setManual(k, on) {
+  matManual = matManual.filter(x => x !== k);
+  if (on) matManual.push(k);
+  store("crafting-mat-manual", matManual);
+}
+const marketBtn = document.getElementById("market-btn"), marketOut = document.getElementById("market-result");
+// auto = ao abrir a página: atualiza sozinho mas não mexe nos preços postos à mão. O botão atualiza todos.
+async function updateFromMarket(auto) {
+  marketBtn.disabled = true; marketOut.textContent = "A ir buscar ao mercado…";
+  try {
+    const r = await fetch(MARKET_URL, { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    const byNorm = {};
+    (data.prices || []).forEach(p => { if (p && p.label && p.min > 0) byNorm[norm(p.label)] = p; });
+    const done = [], missing = [], old = [], kept = [];
+    MAT_ORDER.forEach(k => {
+      const p = byNorm[norm(k)];
+      if (!p) { missing.push(k); return; }
+      if (auto && matManual.includes(k) && matPrice[k]) { kept.push(k); return; }
+      matPrice[k] = p.min; matSrc[k] = p.date; setManual(k, false); done.push(k);
+      if (data.date && p.date < data.date) old.push(`${k} (${dm(p.date)})`);
+    });
+    const used = new Set(MAT_ORDER.map(norm));
+    const extra = (data.prices || []).filter(p => !used.has(norm(p.label))).length;
+    store("crafting-mat-prices", matPrice); store("crafting-mat-src", matSrc);
+    fillGrid(); render();
+    const parts = [`${auto ? "Atualizado ao abrir: " : ""}${done.length} ${done.length === 1 ? "preço" : "preços"} com o mínimo do mercado de ${dm(data.date)}.`];
+    if (kept.length) parts.push(`Ficaram os teus preços postos à mão: ${kept.join(", ")} (carrega no botão para os trocar pelo mercado).`);
+    if (old.length) parts.push(`Sem anúncios nesse dia, ficou o último mínimo: ${old.join(", ")}.`);
+    if (missing.length) parts.push(`O mercado não tem ${missing.join(", ")}: fica o teu preço${missing.some(k => !matPrice[k]) ? " (põe-no à mão em baixo)" : ""}.`);
+    if (extra) parts.push(`Há mais ${extra} materiais no mercado que não entram nos acessórios.`);
+    marketOut.textContent = parts.join(" ");
+  } catch (e) {
+    marketOut.textContent = "Não consegui falar com o mercado (fivem-market.andrelanca.com). Tenta daqui a pouco ou cola a lista em baixo.";
+  } finally { marketBtn.disabled = false; }
+}
+marketBtn.addEventListener("click", () => updateFromMarket(false));
+
 let toastT;
 const toast = t => { const el = document.getElementById("toast"); el.textContent = t; clearTimeout(toastT); toastT = setTimeout(() => { el.textContent = ""; }, 2500); };
 document.getElementById("reset").addEventListener("click", () => { qty = {}; render(); toast("Ficha limpa."); });
@@ -340,7 +403,7 @@ function route() {
   if (precos) {
     document.getElementById("nav-calc").removeAttribute("aria-current");
     document.getElementById("open-prices").setAttribute("aria-current", "page");
-    grid.querySelectorAll("input").forEach(inp => { inp.value = matPrice[inp.dataset.mat] || ""; });
+    fillGrid();
   } else {
     document.getElementById("nav-calc").setAttribute("aria-current", "page");
     document.getElementById("open-prices").removeAttribute("aria-current");
@@ -352,6 +415,7 @@ document.getElementById("storage-warn").hidden = storageOk;
 // Exemplo inicial (100 kevs + 3 heavy barrel) só quando ainda não há nada guardado
 if (!Object.values(qty).some(Boolean)) qty = { "kevs-0": 100, "mk2-0": 3 };
 route(); filter(); render();
+updateFromMarket(true);
 </script>
 </body>
 </html>
