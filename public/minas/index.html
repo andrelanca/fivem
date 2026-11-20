@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Refinaria</title>
+<title>Minas</title>
 <meta name="description" content="Quanto recebes ao entregar lingotes de prata, lingotes de cobre e areia, e quanto vale no mercado.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,11 +14,11 @@
 <script>
 // Só dados e textos. Copiado de scripts/modelo.html, que tem todas as opções.
 // O layout está em ../craft.js e ../craft.css (igual em todas as páginas).
-// Conversões com perda: out = o que sai por cada unidade entregue (10 lingotes de prata → 7 prata).
+// Não é um craft: entregas nas minas e devolvem o que sobra. Conversões com perda: out = o que sai por cada unidade entregue (10 lingotes de prata → 7 prata).
 window.CRAFT = {
-  id: "refinaria",
-  title: "Refinaria",
-  short: "Refinaria",
+  id: "minas",
+  title: "Minas",
+  short: "Minas",
   itemLabel: "Recebes",
   unit: ["entregue", "entregues"],
   qtyLabel: "Entregas",
@@ -28,7 +28,7 @@ window.CRAFT = {
   matCols: false,
   note: "A quantidade é o que entregas. Ao entregar tiram uma parte: 30 % dos lingotes de prata, 20 % dos lingotes de cobre e 60 % da areia. Ex.: 10 lingotes de prata dão 7 de prata. \"Vale\" é quanto vale no mercado o que sai de cada unidade entregue.",
   groups: [
-    { name: "Refinaria", items: [
+    { name: "Minas", items: [
       { n: "Prata", m: { "Lingote de prata": 1 }, out: 0.7, sub: "Tiram 30 %: 10 lingotes dão 7" },
       { n: "Cobre", m: { "Lingote de cobre": 1 }, out: 0.8, sub: "Tiram 20 %: 10 lingotes dão 8" },
       { n: "Vidro", m: { "Areia": 1 },            out: 0.4, sub: "Tiram 60 %: 10 de areia dão 4" },

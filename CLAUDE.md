@@ -87,7 +87,7 @@ Se o **item que sai** está no mercado (ou nos preços à mão), aparece a colun
 `sells: "Nome"` se o nome no mercado for outro) e a ficha mostra quanto vale o que recebes, com a taxa de 15 % (`fee`)
 e, se o custo estiver completo, quanto ganhas/perdes.
 
-**Refinaria** (`public/refinaria/`, pedido 2026-11-20): conversões com perda — entregas 10 lingotes de prata → 7 Prata
+**Minas** (`public/minas/`, pedido 2026-11-20 — não é um craft: entregas e devolvem o remanescente): conversões com perda — entregas 10 lingotes de prata → 7 Prata
 (tiram 30 %), 10 lingotes de cobre → 8 Cobre (20 %), 10 areia → 4 Vidro (60 %). No motor: `out` < 1 por item +
 `roundDown: true` (o que recebes arredonda para baixo). Lingotes/areia não estão no mercado: com preço à mão no
 fivem-market aparece também o Custo e o lucro.
