@@ -17,7 +17,7 @@ window.Market = (function () {
   const here = document.currentScript && document.currentScript.src;
   const recipes = () => window.RECEITAS ? Promise.resolve() : new Promise(ok => {
     const s = document.createElement("script");
-    s.src = here ? new URL("receitas.js", here).href : "../receitas.js";
+    s.src = here ? new URL("receitas.js" + new URL(here).search, here).href : "../receitas.js"; // mesmo ?v= do deploy
     s.onload = s.onerror = ok;
     document.head.appendChild(s);
   });

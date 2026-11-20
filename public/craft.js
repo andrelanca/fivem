@@ -216,7 +216,7 @@
   if (window.Market) useMarket();
   else {
     const s = document.createElement("script");
-    s.src = here ? new URL("market.js", here).href : "../market.js";
+    s.src = here ? new URL("market.js" + new URL(here).search, here).href : "../market.js"; // mesmo ?v= do deploy
     s.onload = useMarket;
     document.head.appendChild(s);
   }

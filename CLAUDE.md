@@ -37,6 +37,9 @@ For deployment problems use the `paas-deploy` skill.
 ## Estrutura
 
 Site estático em `public/`, servido por nginx (ver `Dockerfile`).
+**Cache:** o nginx manda `Cache-Control: no-cache` e o `Dockerfile` põe `?v=<hora do build>` nos `"../*.js|css"` das
+páginas (o `craft.js`/`market.js` passam o mesmo `?v=` ao `market.js`/`receitas.js`). Sem isto a Cloudflare e o
+telemóvel serviam o `craft.js` antigo durante horas depois de um deploy (2026-11-20). Links novos: usar `"../x.js"`.
 
 - `public/index.html`: painel de ferramentas (a página inicial), uma linha `<li class="tool">` por ferramenta.
 - `public/tokens.css` e `public/base.css`: cores, tipos e regras base.
