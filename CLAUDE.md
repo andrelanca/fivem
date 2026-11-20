@@ -83,6 +83,14 @@ Preços: `https://fivem-market.andrelanca.com/api/prices` (JSON público com COR
 **Motor `craft.js`** (Balas, Peças, Siderurgia, Armas): carrega `market.js` sozinho; se algum material da página tem
 preço, aparece a coluna **Custo** (custo de 1 craft; "+ sem X" quando falta preço de algum) e a ficha mostra o custo
 de cada material e o total (também no "Copiar lista"). Páginas sem nenhum material no mercado (Armas) ficam iguais.
+Se o **item que sai** está no mercado (ou nos preços à mão), aparece a coluna **Vale** (valor de 1 craft = `out` × mínimo;
+`sells: "Nome"` se o nome no mercado for outro) e a ficha mostra quanto vale o que recebes, com a taxa de 15 % (`fee`)
+e, se o custo estiver completo, quanto ganhas/perdes.
+
+**Refinaria** (`public/refinaria/`, pedido 2026-11-20): conversões com perda — entregas 10 lingotes de prata → 7 Prata
+(tiram 30 %), 10 lingotes de cobre → 8 Cobre (20 %), 10 areia → 4 Vidro (60 %). No motor: `out` < 1 por item +
+`roundDown: true` (o que recebes arredonda para baixo). Lingotes/areia não estão no mercado: com preço à mão no
+fivem-market aparece também o Custo e o lucro.
 
 **Crafting (acessórios)**: atualiza os preços dos materiais **ao abrir** (`updateFromMarket(true)`) sem mexer nos
 postos à mão (`localStorage` `crafting-mat-manual`); botão **Atualizar do mercado** troca todos. Origem por material
