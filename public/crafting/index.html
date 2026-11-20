@@ -339,8 +339,8 @@ function fillGrid() { grid.querySelectorAll("input").forEach(inp => { inp.value 
 function showSrc() {
   MAT_ORDER.forEach((k, i) => {
     const el = document.getElementById("src-" + i);
-    const src = matSrc[k] || "", f = src.startsWith("f:");
-    el.textContent = src ? (f ? "feito na Siderurgia, " : "mercado, ") + dm(f ? src.slice(2) : src) : matPrice[k] ? "posto à mão" : "sem preço";
+    const src = matSrc[k] || "", tag = /^[fm]:/.test(src) ? src[0] : "";
+    el.textContent = src ? ({ f: "feito na Siderurgia, ", m: "à mão no site do mercado, " }[tag] || "mercado, ") + dm(tag ? src.slice(2) : src) : matPrice[k] ? "posto à mão" : "sem preço";
     el.className = "src" + (matSrc[k] ? "" : " off");
   });
 }
@@ -362,7 +362,7 @@ async function updateFromMarket(auto) {
       if (auto && matManual.includes(k) && matPrice[k]) { kept.push(k); return; }
       // ao abrir, um preço antigo sem origem (de antes desta versão) não é trocado pelo custo da receita
       if (auto && p.made && matPrice[k] && !matSrc[k]) { kept.push(k); return; }
-      matPrice[k] = p.min; matSrc[k] = (p.made ? "f:" : "") + p.date; setManual(k, false); done.push(k);
+      matPrice[k] = p.min; matSrc[k] = (p.made ? "f:" : p.manual ? "m:" : "") + p.date; setManual(k, false); done.push(k);
       if (p.made) made.push(k);
       if (data.date && p.date < data.date) old.push(`${k} (${dm(p.date)})`);
     });

@@ -167,12 +167,12 @@
     document.getElementById("mats").innerHTML = !mk.length ? `<p class="empty">Nada por agora. Usa o + numa linha da tabela.</p>`
       : pc ? `<table class="list"><thead><tr><th>Material</th><th class="num">Quantidade</th><th class="num">Custo</th></tr></thead><tbody>${mk.map(k => {
           const m = mkt.find(k);
-          return `<tr><td>${esc(k)}${m && m.made ? ` <span class="empty">feito${m.missing.length ? ", sem " + esc(m.missing.join(", ")) : ""}</span>` : ""}</td><td class="num">${fmt(mats[k])}</td><td class="num${m ? "" : " dim"}">${m ? eur(m.min * mats[k]) : "sem preço"}</td></tr>`;
+          return `<tr><td>${esc(k)}${m && m.made ? ` <span class="empty">feito${m.missing.length ? ", sem " + esc(m.missing.join(", ")) : ""}</span>` : m && m.manual ? ` <span class="empty">à mão</span>` : ""}</td><td class="num">${fmt(mats[k])}</td><td class="num${m ? "" : " dim"}">${m ? eur(m.min * mats[k]) : "sem preço"}</td></tr>`;
         }).join("")}<tr class="tot"><td>Total</td><td></td><td class="num">${eur(cost)}</td></tr></tbody></table>`
       : table(mk.map(k => [esc(k), fmt(mats[k])]));
     const miss = [...new Set(noPrice)];
     document.getElementById("mkt-note").textContent = pc && mk.length
-      ? `Custo ao preço mais baixo do mercado de ${Market.dm(mkt.date)}.` + (mk.some(k => { const m = mkt.find(k); return m && m.made; }) ? " \"Feito\" = o mercado não tem, conta o custo dos materiais da receita (Siderurgia)." : "") + (miss.length ? ` Sem preço: ${miss.join(", ")}, não entra no total.` : "")
+      ? `Custo ao preço mais baixo do mercado de ${Market.dm(mkt.date)}.` + (mk.some(k => { const m = mkt.find(k); return m && m.made; }) ? " \"Feito\" = o mercado não tem, conta o custo dos materiais da receita (Siderurgia)." : "") + (mk.some(k => { const m = mkt.find(k); return m && m.manual; }) ? " \"À mão\" = preço posto em Preços à mão no site do mercado." : "") + (miss.length ? ` Sem preço: ${miss.join(", ")}, não entra no total.` : "")
       : "";
     document.getElementById("sel").innerHTML = sel.length
       ? table(sel.map(s => s.it.out > 1 ? [`${esc(s.it.n)} <span class="empty">${s.q}× craft</span>`, fmt(s.q * s.it.out)] : [esc(s.it.n), s.q + "×"]))

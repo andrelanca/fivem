@@ -74,6 +74,8 @@ Preços: `https://fivem-market.andrelanca.com/api/prices` (JSON público com COR
 - se o mercado não tem o material mas há receita em **`public/receitas.js`** (Aço, Bronze, Polímero, Lingote de ferro —
   a página da Siderurgia lê os itens daí), o preço é a soma dos materiais da receita (`made: true`, `missing` = o que
   ficou sem preço, ex.: Petróleo). Receita nova de um material intermédio → juntar em `receitas.js`.
+- o `/api/prices` também traz os **preços à mão** do fivem-market (Análise → Preços à mão, `source: "manual"`) para
+  materiais que o mercado não tem: `find` devolve `manual: true` → na ficha "à mão"; no crafting "à mão no site do mercado" (prefixo `m:`).
 
 **Motor `craft.js`** (Balas, Peças, Siderurgia, Armas): carrega `market.js` sozinho; se algum material da página tem
 preço, aparece a coluna **Custo** (custo de 1 craft; "+ sem X" quando falta preço de algum) e a ficha mostra o custo

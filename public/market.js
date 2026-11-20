@@ -1,8 +1,9 @@
 // Preços do mercado (repo andrelanca/fivem-market, https://fivem-market.andrelanca.com/api/prices).
 // Partilhado pelo crafting e pelo motor craft.js (que carrega este ficheiro sozinho).
 // Market.load() → Promise de { date, find(nome), prices }. Um pedido por página.
-// find(nome) → { min, date, made, missing } | null:
+// find(nome) → { min, date, made, manual, missing } | null:
 //   - se o mercado tem o material: o mínimo do mercado;
+//   - senão, um preço posto à mão no fivem-market (Análise → Preços à mão; manual: true);
 //   - senão, se há receita em receitas.js (ex.: Aço, feito na Siderurgia): soma dos materiais da receita
 //     (made: true); missing = materiais lá dentro sem preço (não entram na soma).
 window.Market = (function () {
@@ -32,7 +33,7 @@ window.Market = (function () {
         Object.entries(window.RECEITAS || {}).forEach(([k, v]) => { R[norm(k)] = v; });
         const find = (name, seen) => {
           const k = norm(name), x = by[k];
-          if (x) return { label: x.label, min: x.min, date: x.date, made: false, missing: [] };
+          if (x) return { label: x.label, min: x.min, date: x.date, made: false, manual: x.source === "manual", missing: [] };
           const r = R[k]; seen = seen || [];
           if (!r || seen.includes(k)) return null;
           let min = 0; const missing = [];
@@ -40,7 +41,7 @@ window.Market = (function () {
             const f = find(m, seen.concat(k));
             if (f) { min += f.min * q; missing.push(...f.missing); } else missing.push(m);
           });
-          return min ? { label: name, min, date: d.date, made: true, missing: [...new Set(missing)] } : null;
+          return min ? { label: name, min, date: d.date, made: true, manual: false, missing: [...new Set(missing)] } : null;
         };
         return { date: d.date, prices: d.prices || [], find };
       });
