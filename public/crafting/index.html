@@ -95,6 +95,7 @@
   <a class="btn" href="#ficha-title" id="d-go">Ver ficha</a>
 </div>
 
+<script src="../market.js"></script>
 <script>
 const AL = "Alumínio", PL = "Plástico", AC = "Aço", RE = "Resto Eletrónico", FI = "Fibra", PE = "Pele", CO = "Couro", TE = "Tecido";
 const CATS = [
@@ -285,8 +286,7 @@ grid.addEventListener("input", e => {
 
 // Importar "Material,Preço" (também aceita ; ou tab). Os nomes comparam-se sem acentos,
 // maiúsculas nem plurais, por isso "Restos Eletrónicos" acerta em "Resto Eletrónico".
-const norm = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
-  .split(/\s+/).map(w => w.length > 3 ? w.replace(/(es|s)$/, "") : w).join(" ");
+const norm = Market.norm; // ../market.js (também ignora "de/da/do")
 const MAT_BY_NORM = Object.fromEntries(MAT_ORDER.map(k => [norm(k), k]));
 const parsePrice = t => {
   t = t.trim().replace(/[^\d.,-]/g, "");
@@ -334,13 +334,13 @@ document.getElementById("import-file").addEventListener("change", e => {
 
 // Preços do mercado (fivem-market). Só entram os materiais usados nos acessórios; comparam-se pelo nome
 // (norm), por isso um material novo no mercado com o mesmo nome entra sozinho. O que o mercado não tem fica à mão.
-const MARKET_URL = "https://fivem-market.andrelanca.com/api/prices";
-const dm = d => d ? d.slice(8, 10) + "/" + d.slice(5, 7) : "";
+const dm = Market.dm;
 function fillGrid() { grid.querySelectorAll("input").forEach(inp => { inp.value = matPrice[inp.dataset.mat] || ""; }); showSrc(); }
 function showSrc() {
   MAT_ORDER.forEach((k, i) => {
     const el = document.getElementById("src-" + i);
-    el.textContent = matSrc[k] ? "mercado, " + dm(matSrc[k]) : matPrice[k] ? "posto à mão" : "sem preço";
+    const src = matSrc[k] || "", f = src.startsWith("f:");
+    el.textContent = src ? (f ? "feito na Siderurgia, " : "mercado, ") + dm(f ? src.slice(2) : src) : matPrice[k] ? "posto à mão" : "sem preço";
     el.className = "src" + (matSrc[k] ? "" : " off");
   });
 }
@@ -354,24 +354,24 @@ const marketBtn = document.getElementById("market-btn"), marketOut = document.ge
 async function updateFromMarket(auto) {
   marketBtn.disabled = true; marketOut.textContent = "A ir buscar ao mercado…";
   try {
-    const r = await fetch(MARKET_URL, { cache: "no-store" });
-    if (!r.ok) throw new Error(r.status);
-    const data = await r.json();
-    const byNorm = {};
-    (data.prices || []).forEach(p => { if (p && p.label && p.min > 0) byNorm[norm(p.label)] = p; });
-    const done = [], missing = [], old = [], kept = [];
+    const data = await Market.load(true); // ../market.js: mínimo do mercado, ou custo da receita (receitas.js) se o mercado não tem
+    const done = [], missing = [], old = [], kept = [], made = [];
     MAT_ORDER.forEach(k => {
-      const p = byNorm[norm(k)];
-      if (!p) { missing.push(k); return; }
+      const p = data.find(k);
+      if (!p || p.missing.length) { missing.push(k); return; }
       if (auto && matManual.includes(k) && matPrice[k]) { kept.push(k); return; }
-      matPrice[k] = p.min; matSrc[k] = p.date; setManual(k, false); done.push(k);
+      // ao abrir, um preço antigo sem origem (de antes desta versão) não é trocado pelo custo da receita
+      if (auto && p.made && matPrice[k] && !matSrc[k]) { kept.push(k); return; }
+      matPrice[k] = p.min; matSrc[k] = (p.made ? "f:" : "") + p.date; setManual(k, false); done.push(k);
+      if (p.made) made.push(k);
       if (data.date && p.date < data.date) old.push(`${k} (${dm(p.date)})`);
     });
     const used = new Set(MAT_ORDER.map(norm));
-    const extra = (data.prices || []).filter(p => !used.has(norm(p.label))).length;
+    const extra = data.prices.filter(p => !used.has(norm(p.label))).length;
     store("crafting-mat-prices", matPrice); store("crafting-mat-src", matSrc);
     fillGrid(); render();
     const parts = [`${auto ? "Atualizado ao abrir: " : ""}${done.length} ${done.length === 1 ? "preço" : "preços"} com o mínimo do mercado de ${dm(data.date)}.`];
+    if (made.length) parts.push(`${made.join(", ")}: o mercado não tem, conta o custo dos materiais da receita da Siderurgia.`);
     if (kept.length) parts.push(`Ficaram os teus preços postos à mão: ${kept.join(", ")} (carrega no botão para os trocar pelo mercado).`);
     if (old.length) parts.push(`Sem anúncios nesse dia, ficou o último mínimo: ${old.join(", ")}.`);
     if (missing.length) parts.push(`O mercado não tem ${missing.join(", ")}: fica o teu preço${missing.some(k => !matPrice[k]) ? " (põe-no à mão em baixo)" : ""}.`);

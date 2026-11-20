@@ -68,11 +68,17 @@ groups: [
 
 ## Ligação ao mercado (fivem-market)
 
-`public/crafting/` → vista *Preços dos materiais* tem o botão **Atualizar do mercado**: faz `fetch` a
-`https://fivem-market.andrelanca.com/api/prices` (JSON público com CORS, gerado pelo repo `andrelanca/fivem-market`)
-e põe o **mínimo** de cada material. Só entram os materiais usados nas receitas (`MAT_ORDER`), comparados pelo nome
-com `norm()` (sem acentos/maiúsculas/plurais). O que o mercado não tem (ex.: Aço) fica com o preço posto à mão.
-Cada material mostra a origem ("mercado, DD/MM" / "posto à mão") — guardada em `localStorage` `crafting-mat-src`;
-editar à mão ou importar texto apaga a origem.
-**Atualiza sozinho ao abrir a página** (`updateFromMarket(true)`), mas não mexe nos preços postos à mão
-(`localStorage` `crafting-mat-manual`); o botão atualiza todos, incluindo esses. Material novo numa receita: se o nome bater com o do mercado, entra sozinho.
+Preços: `https://fivem-market.andrelanca.com/api/prices` (JSON público com CORS, do repo `andrelanca/fivem-market`) — o
+**mínimo** de cada material. Tudo passa por **`public/market.js`** (`Market.load()` → `find(nome)`):
+- nomes comparados com `Market.norm` (sem acentos/maiúsculas/plurais, ignora "de/da/do": "Lingote de ferro" = "Lingote Ferro");
+- se o mercado não tem o material mas há receita em **`public/receitas.js`** (Aço, Bronze, Polímero, Lingote de ferro —
+  a página da Siderurgia lê os itens daí), o preço é a soma dos materiais da receita (`made: true`, `missing` = o que
+  ficou sem preço, ex.: Petróleo). Receita nova de um material intermédio → juntar em `receitas.js`.
+
+**Motor `craft.js`** (Balas, Peças, Siderurgia, Armas): carrega `market.js` sozinho; se algum material da página tem
+preço, aparece a coluna **Custo** (custo de 1 craft; "+ sem X" quando falta preço de algum) e a ficha mostra o custo
+de cada material e o total (também no "Copiar lista"). Páginas sem nenhum material no mercado (Armas) ficam iguais.
+
+**Crafting (acessórios)**: atualiza os preços dos materiais **ao abrir** (`updateFromMarket(true)`) sem mexer nos
+postos à mão (`localStorage` `crafting-mat-manual`); botão **Atualizar do mercado** troca todos. Origem por material
+em `crafting-mat-src` ("mercado, DD/MM" / "feito na Siderurgia, DD/MM" (prefixo `f:`) / "posto à mão").

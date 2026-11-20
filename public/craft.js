@@ -2,6 +2,7 @@
 // e carrega este ficheiro, que desenha a página toda: topo, tabela, separadores, ficha, dock, copiar e limpar.
 // O layout vive aqui e em craft.css. As páginas só têm dados e textos.
 (function () {
+  const here = document.currentScript && document.currentScript.src;
   const C = window.CRAFT;
   if (!C) throw new Error("craft.js: falta definir window.CRAFT antes de carregar este ficheiro.");
 
@@ -37,6 +38,7 @@
   const storeKey = (C.id || location.pathname) + "-qty";
   let qty = load(storeKey, {}) || {};
   let cat = "todos";
+  let mkt = null; // preços do mercado (market.js), quando chegarem
 
   // ---- página ----
   document.body.innerHTML = `
@@ -63,7 +65,7 @@
         <div class="lbl">${esc(money)} total</div>
         <div class="figure" id="t-price">0 €</div>
       </div>` : ""}
-      <div><h3>Materiais</h3><div id="mats"></div></div>
+      <div><h3>Materiais</h3><div id="mats"></div><p class="note" id="mkt-note"></p></div>
       <div><h3>${esc(outTitle)}</h3><div id="sel"></div></div>
       <div class="actions">
         <button type="button" class="btn btn--primary" id="copy">Copiar lista</button>
@@ -79,19 +81,32 @@
 </div>`;
 
   const list = document.getElementById("list");
-  const cols = 2 + (hasMoney ? 1 : 0) + (matCols ? MATS.length : 1);
+  const priced = () => !!(mkt && MATS.some(k => mkt.find(k))); // algum material desta página está no mercado
+  // custo de 1 craft ao mínimo do mercado; missing = materiais sem preço (não entram na soma)
+  const itemCost = it => { let c = 0; const missing = [];
+    Object.entries(it.m || {}).forEach(([k, v]) => { const m = mkt.find(k); if (m) { c += m.min * v; missing.push(...m.missing); } else missing.push(k); });
+    return { c, missing: [...new Set(missing)] }; };
+  const costCell = it => {
+    const { c, missing } = itemCost(it);
+    const sub = missing.length ? `<div class="mats">sem ${esc(missing.join(", "))}</div>` : "";
+    return `<td class="num price cost" data-label="Custo"${missing.length ? ` title="O mercado não tem ${esc(missing.join(", "))}: não entra na soma"` : ""}>${c ? eur(c) + (missing.length ? " +" : "") : "—"}${sub}</td>`;
+  };
   const matCells = it => matCols
     ? MATS.map(k => `<td class="num price" data-label="${esc(k)}">${(it.m && it.m[k]) || 0}</td>`).join("")
     : `<td class="mats">${MATS.filter(k => it.m && it.m[k]).map(k => `${it.m[k]} ${esc(k)}`).join(" · ")}</td>`;
   const sub = it => it.sub != null ? it.sub : (it.out > 1 ? `Dá ${it.out} por craft` : "");
 
+  function drawTable() {
+  const pc = priced();
+  const cols = 2 + (hasMoney ? 1 : 0) + (pc ? 1 : 0) + (matCols ? MATS.length : 1);
   list.innerHTML = `<table class="sheet">
-  <thead><tr><th>${esc(C.itemLabel || "Item")}</th>${matCols ? MATS.map(k => `<th class="num">${esc(k)}</th>`).join("") : "<th>Materiais</th>"}${hasMoney ? `<th class="num">${esc(money)}</th>` : ""}<th class="num">${esc(C.qtyLabel || "Quantidade")}</th></tr></thead>
+  <thead><tr><th>${esc(C.itemLabel || "Item")}</th>${matCols ? MATS.map(k => `<th class="num">${esc(k)}</th>`).join("") : "<th>Materiais</th>"}${pc ? `<th class="num" title="Custo dos materiais de 1 craft, ao preço mais baixo do mercado de ${esc(Market.dm(mkt.date))}">Custo</th>` : ""}${hasMoney ? `<th class="num">${esc(money)}</th>` : ""}<th class="num">${esc(C.qtyLabel || "Quantidade")}</th></tr></thead>
   ${groups.map(g => `<tbody class="group" data-cat="${g.id}">
     <tr class="ghead"><td colspan="${cols}"><h2>${esc(g.name)}</h2></td></tr>
     ${g.items.map(it => `<tr class="item" data-key="${it.key}">
       <td class="desc"><div class="name">${esc(it.n)}</div>${sub(it) ? `<div class="mats">${esc(sub(it))}</div>` : ""}</td>
       ${matCells(it)}
+      ${pc ? costCell(it) : ""}
       ${hasMoney ? `<td class="num price sem" data-label="${esc(money)}">${eur(it.p || 0)}</td>` : ""}
       <td class="num qcell"><div class="qty">
         <button type="button" data-d="-1" aria-label="Menos ${esc(it.n)}">−</button>
@@ -101,6 +116,8 @@
     </tr>`).join("")}
   </tbody>`).join("")}
 </table>`;
+  }
+  drawTable();
 
   // ---- separadores (um por grupo, mais "Todos") ----
   const tabs = document.getElementById("tabs");
@@ -143,12 +160,25 @@
       document.getElementById("d-price").textContent = eur(price);
     }
     const mk = MATS.filter(k => mats[k]);
-    document.getElementById("mats").innerHTML = mk.length ? table(mk.map(k => [esc(k), fmt(mats[k])])) : `<p class="empty">Nada por agora. Usa o + numa linha da tabela.</p>`;
+    // com preços do mercado: custo de cada material ao mínimo do mercado (só se algum material da página está lá)
+    const pc = priced();
+    let cost = 0; const noPrice = [];
+    mk.forEach(k => { const m = pc && mkt.find(k); if (m) { cost += m.min * mats[k]; noPrice.push(...m.missing); } else if (pc) noPrice.push(k); });
+    document.getElementById("mats").innerHTML = !mk.length ? `<p class="empty">Nada por agora. Usa o + numa linha da tabela.</p>`
+      : pc ? `<table class="list"><thead><tr><th>Material</th><th class="num">Quantidade</th><th class="num">Custo</th></tr></thead><tbody>${mk.map(k => {
+          const m = mkt.find(k);
+          return `<tr><td>${esc(k)}${m && m.made ? ` <span class="empty">feito${m.missing.length ? ", sem " + esc(m.missing.join(", ")) : ""}</span>` : ""}</td><td class="num">${fmt(mats[k])}</td><td class="num${m ? "" : " dim"}">${m ? eur(m.min * mats[k]) : "sem preço"}</td></tr>`;
+        }).join("")}<tr class="tot"><td>Total</td><td></td><td class="num">${eur(cost)}</td></tr></tbody></table>`
+      : table(mk.map(k => [esc(k), fmt(mats[k])]));
+    const miss = [...new Set(noPrice)];
+    document.getElementById("mkt-note").textContent = pc && mk.length
+      ? `Custo ao preço mais baixo do mercado de ${Market.dm(mkt.date)}.` + (mk.some(k => { const m = mkt.find(k); return m && m.made; }) ? " \"Feito\" = o mercado não tem, conta o custo dos materiais da receita (Siderurgia)." : "") + (miss.length ? ` Sem preço: ${miss.join(", ")}, não entra no total.` : "")
+      : "";
     document.getElementById("sel").innerHTML = sel.length
       ? table(sel.map(s => s.it.out > 1 ? [`${esc(s.it.n)} <span class="empty">${s.q}× craft</span>`, fmt(s.q * s.it.out)] : [esc(s.it.n), s.q + "×"]))
       : `<p class="empty">Ainda nada.</p>`;
     store(storeKey, qty);
-    return { mats, mk, price, sel };
+    return { mats, mk, price, sel, cost: pc && mk.length ? cost : null, noPrice: [...new Set(noPrice)] };
   }
 
   list.addEventListener("click", e => {
@@ -173,10 +203,21 @@
     const txt = [
       C.short.toUpperCase(), ...r.sel.map(s => s.it.out > 1 ? `- ${s.q}x craft ${s.it.n} = ${fmt(s.q * s.it.out)}${outWord ? " " + outWord : ""}` : `- ${s.q}x ${s.it.n}`), "",
       "MATERIAIS", ...r.mk.map(k => `- ${fmt(r.mats[k])} ${k}`),
-      ...(hasMoney ? ["", `${money} total: ${eur(r.price)}`] : [])
+      ...(hasMoney ? ["", `${money} total: ${eur(r.price)}`] : []),
+      ...(r.cost != null ? [`Custo dos materiais (mercado ${Market.dm(mkt.date)}): ${eur(r.cost)}${r.noPrice.length ? " (sem " + r.noPrice.join(", ") + ")" : ""}`] : [])
     ].join("\n");
     navigator.clipboard.writeText(txt).then(() => toast("Lista copiada."), () => toast("Este browser não deixou copiar. Tenta noutro browser."));
   });
 
   filter(); render();
+
+  // preços do mercado: carrega market.js (ao lado deste ficheiro) e volta a desenhar quando chegarem
+  const useMarket = () => window.Market.load().then(m => { mkt = m; if (priced()) { drawTable(); filter(); } render(); }).catch(() => {});
+  if (window.Market) useMarket();
+  else {
+    const s = document.createElement("script");
+    s.src = here ? new URL("market.js", here).href : "../market.js";
+    s.onload = useMarket;
+    document.head.appendChild(s);
+  }
 })();

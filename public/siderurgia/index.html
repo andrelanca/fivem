@@ -11,8 +11,9 @@
 <link rel="stylesheet" href="../craft.css">
 </head>
 <body>
+<script src="../receitas.js"></script>
 <script>
-// Só dados e textos. Copiado de scripts/modelo.html, que tem todas as opções.
+// Só dados e textos. As receitas vêm de ../receitas.js (partilhadas com o custo das outras páginas). Copiado de scripts/modelo.html, que tem todas as opções.
 // O layout está em ../craft.js e ../craft.css (igual em todas as páginas).
 window.CRAFT = {
   id: "siderurgia",
@@ -24,10 +25,10 @@ window.CRAFT = {
   materials: ["Ferro", "Lingote de ferro", "Carvão", "Cobre", "Estanho", "Petróleo", "Vidro"],
   groups: [
     { name: "Siderurgia", items: [
-      { n: "Lingote de ferro", m: { "Ferro": 1 } },
-      { n: "Aço",              m: { "Carvão": 1, "Lingote de ferro": 1 } },
-      { n: "Bronze",           m: { "Cobre": 1, "Estanho": 1 } },
-      { n: "Polímero",         m: { "Carvão": 1, "Petróleo": 1, "Vidro": 1 } },
+      { n: "Lingote de ferro", m: RECEITAS["Lingote de ferro"] },
+      { n: "Aço",              m: RECEITAS["Aço"] },
+      { n: "Bronze",           m: RECEITAS["Bronze"] },
+      { n: "Polímero",         m: RECEITAS["Polímero"] },
     ]},
   ],
 };
