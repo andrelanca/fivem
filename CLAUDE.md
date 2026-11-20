@@ -40,3 +40,12 @@ Site estático em `public/`, servido por nginx (ver `Dockerfile`).
 Para juntar uma ferramenta: cria `public/<nome>/index.html` (importa `../tokens.css` e `../base.css`,
 e põe no topo o caminho `Ferramentas / <Nome>` com link para `../`), depois junta uma linha `<li class="tool">`
 no painel, só com o título.
+
+## Ligação ao mercado (fivem-market)
+
+`public/crafting/` → vista *Preços dos materiais* tem o botão **Atualizar do mercado**: faz `fetch` a
+`https://fivem-market.andrelanca.com/api/prices` (JSON público com CORS, gerado pelo repo `andrelanca/fivem-market`)
+e põe o **mínimo** de cada material. Só entram os materiais usados nas receitas (`MAT_ORDER`), comparados pelo nome
+com `norm()` (sem acentos/maiúsculas/plurais). O que o mercado não tem (ex.: Aço) fica com o preço posto à mão.
+Cada material mostra a origem ("mercado, DD/MM" / "posto à mão") — guardada em `localStorage` `crafting-mat-src`;
+editar à mão ou importar texto apaga a origem. Material novo numa receita: se o nome bater com o do mercado, entra sozinho.
