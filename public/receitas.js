@@ -7,3 +7,12 @@ window.RECEITAS = {
   "Bronze":           { "Cobre": 1, "Estanho": 1 },
   "Polímero":         { "Carvão": 1, "Petróleo": 1, "Vidro": 1 },
 };
+
+// Minas: entregas e devolvem o que sobra. Por cada 1 unidade entregue sai isto (10 lingotes de cobre → 8 Cobre).
+// Usado pela página das Minas (os itens vêm daqui) e pelo market.js: o preço de um lingote = o que ele dá
+// (1 lingote de cobre = 0,8 × preço do Cobre).
+window.CONVERSOES = {
+  "Lingote de prata": { "Prata": 0.7 },   // tiram 30 %
+  "Lingote de cobre": { "Cobre": 0.8 },   // tiram 20 %
+  "Areia":            { "Vidro": 0.4 },   // tiram 60 %
+};

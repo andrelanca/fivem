@@ -11,10 +11,12 @@
 <link rel="stylesheet" href="../craft.css">
 </head>
 <body>
+<script src="../receitas.js"></script>
 <script>
 // Só dados e textos. Copiado de scripts/modelo.html, que tem todas as opções.
 // O layout está em ../craft.js e ../craft.css (igual em todas as páginas).
-// Não é um craft: entregas nas minas e devolvem o que sobra. Conversões com perda: out = o que sai por cada unidade entregue (10 lingotes de prata → 7 prata).
+// Não é um craft: entregas nas minas e devolvem o que sobra. As percentagens vêm de ../receitas.js (CONVERSOES),
+// que também dá preço aos lingotes/areia pelo que convertem (1 lingote de cobre = 0,8 × Cobre).
 window.CRAFT = {
   id: "minas",
   title: "Minas",
@@ -26,12 +28,13 @@ window.CRAFT = {
   fichaTitle: "Entregas",
   roundDown: true,                 // o que recebes arredonda para baixo
   matCols: false,
-  note: "A quantidade é o que entregas. Ao entregar tiram uma parte: 30 % dos lingotes de prata, 20 % dos lingotes de cobre e 60 % da areia. Ex.: 10 lingotes de prata dão 7 de prata. \"Vale\" é quanto vale no mercado o que sai de cada unidade entregue.",
+  valLabel: "Vale cada",           // quanto vale 1 unidade entregue = o que dá × mínimo do mercado
+  note: "A quantidade é o que entregas. Ao entregar tiram uma parte: 30 % dos lingotes de prata, 20 % dos lingotes de cobre e 60 % da areia. Ex.: 10 lingotes de prata dão 7 de prata. \"Vale cada\" é quanto vale 1 unidade entregue pelo que dá: 1 lingote de cobre = 0,8 × o preço do Cobre.",
   groups: [
     { name: "Minas", items: [
-      { n: "Prata", m: { "Lingote de prata": 1 }, out: 0.7, sub: "Tiram 30 %: 10 lingotes dão 7" },
-      { n: "Cobre", m: { "Lingote de cobre": 1 }, out: 0.8, sub: "Tiram 20 %: 10 lingotes dão 8" },
-      { n: "Vidro", m: { "Areia": 1 },            out: 0.4, sub: "Tiram 60 %: 10 de areia dão 4" },
+      { n: "Prata", m: { "Lingote de prata": 1 }, out: CONVERSOES["Lingote de prata"]["Prata"], sub: "Tiram 30 %: 10 lingotes dão 7" },
+      { n: "Cobre", m: { "Lingote de cobre": 1 }, out: CONVERSOES["Lingote de cobre"]["Cobre"], sub: "Tiram 20 %: 10 lingotes dão 8" },
+      { n: "Vidro", m: { "Areia": 1 },            out: CONVERSOES["Areia"]["Vidro"], sub: "Tiram 60 %: 10 de areia dão 4" },
     ]},
   ],
 };

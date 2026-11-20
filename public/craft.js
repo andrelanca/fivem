@@ -82,10 +82,12 @@
 </div>`;
 
   const list = document.getElementById("list");
-  const priced = () => !!(mkt && MATS.some(k => mkt.find(k))); // algum material desta página está no mercado
+  // preço para CUSTO: um valor "pelo que dá" (conversões das Minas) não é o que pagaste, por isso não conta como custo
+  const costOf = k => { const m = mkt && mkt.find(k); return m && !m.derived ? m : null; };
+  const priced = () => !!(mkt && MATS.some(k => costOf(k))); // algum material desta página tem preço
   // custo de 1 craft ao mínimo do mercado; missing = materiais sem preço (não entram na soma)
   const itemCost = it => { let c = 0; const missing = [];
-    Object.entries(it.m || {}).forEach(([k, v]) => { const m = mkt.find(k); if (m) { c += m.min * v; missing.push(...m.missing); } else missing.push(k); });
+    Object.entries(it.m || {}).forEach(([k, v]) => { const m = costOf(k); if (m) { c += m.min * v; missing.push(...m.missing); } else missing.push(k); });
     return { c, missing: [...new Set(missing)] }; };
   const costCell = it => {
     const { c, missing } = itemCost(it);
@@ -101,14 +103,16 @@
   // valor no mercado do que sai (só se o mercado, ou um preço à mão, tem esse item — não o custo de uma receita)
   const outPrice = it => { const m = mkt && mkt.find(it.sells || it.n); return m && !m.made ? m : null; };
   const valued = () => !!(mkt && items.some(outPrice));
+  const valLabel = C.valLabel || "Vale";
+  const dec = n => String(n).replace(".", ",");
   const valCell = it => { const m = outPrice(it);
-    return `<td class="num price cost" data-label="Vale">${m ? eur(m.min * it.out) : "—"}</td>`; };
+    return `<td class="num price cost" data-label="${esc(valLabel)}">${m ? eur(m.min * it.out) + (it.out !== 1 ? `<div class="mats">${dec(it.out)} × ${eur(m.min)}</div>` : "") : "—"}</td>`; };
 
   function drawTable() {
   const pc = priced(), vc = valued();
   const cols = 2 + (hasMoney ? 1 : 0) + (pc ? 1 : 0) + (vc ? 1 : 0) + (matCols ? MATS.length : 1);
   list.innerHTML = `<table class="sheet">
-  <thead><tr><th>${esc(C.itemLabel || "Item")}</th>${matCols ? MATS.map(k => `<th class="num">${esc(k)}</th>`).join("") : "<th>Materiais</th>"}${pc ? `<th class="num" title="Custo dos materiais de 1 craft, ao preço mais baixo do mercado de ${esc(Market.dm(mkt.date))}">Custo</th>` : ""}${vc ? `<th class="num" title="Quanto vale no mercado o que sai de 1 ${esc(unit[0])} (ao preço mais baixo de ${esc(Market.dm(mkt.date))})">Vale</th>` : ""}${hasMoney ? `<th class="num">${esc(money)}</th>` : ""}<th class="num">${esc(C.qtyLabel || "Quantidade")}</th></tr></thead>
+  <thead><tr><th>${esc(C.itemLabel || "Item")}</th>${matCols ? MATS.map(k => `<th class="num">${esc(k)}</th>`).join("") : "<th>Materiais</th>"}${pc ? `<th class="num" title="Custo dos materiais de 1 craft, ao preço mais baixo do mercado de ${esc(Market.dm(mkt.date))}">Custo</th>` : ""}${vc ? `<th class="num" title="Quanto vale no mercado o que sai de 1 ${esc(unit[0])} (ao preço mais baixo de ${esc(Market.dm(mkt.date))})">${esc(valLabel)}</th>` : ""}${hasMoney ? `<th class="num">${esc(money)}</th>` : ""}<th class="num">${esc(C.qtyLabel || "Quantidade")}</th></tr></thead>
   ${groups.map(g => `<tbody class="group" data-cat="${g.id}">
     <tr class="ghead"><td colspan="${cols}"><h2>${esc(g.name)}</h2></td></tr>
     ${g.items.map(it => `<tr class="item" data-key="${it.key}">
@@ -172,16 +176,16 @@
     // com preços do mercado: custo de cada material ao mínimo do mercado (só se algum material da página está lá)
     const pc = priced();
     let cost = 0; const noPrice = [];
-    mk.forEach(k => { const m = pc && mkt.find(k); if (m) { cost += m.min * mats[k]; noPrice.push(...m.missing); } else if (pc) noPrice.push(k); });
+    mk.forEach(k => { const m = pc && costOf(k); if (m) { cost += m.min * mats[k]; noPrice.push(...m.missing); } else if (pc) noPrice.push(k); });
     document.getElementById("mats").innerHTML = !mk.length ? `<p class="empty">Nada por agora. Usa o + numa linha da tabela.</p>`
       : pc ? `<table class="list"><thead><tr><th>Material</th><th class="num">Quantidade</th><th class="num">Custo</th></tr></thead><tbody>${mk.map(k => {
-          const m = mkt.find(k);
+          const m = costOf(k);
           return `<tr><td>${esc(k)}${m && m.made ? ` <span class="empty">feito${m.missing.length ? ", sem " + esc(m.missing.join(", ")) : ""}</span>` : m && m.manual ? ` <span class="empty">à mão</span>` : ""}</td><td class="num">${fmt(mats[k])}</td><td class="num${m ? "" : " dim"}">${m ? eur(m.min * mats[k]) : "sem preço"}</td></tr>`;
         }).join("")}<tr class="tot"><td>Total</td><td></td><td class="num">${eur(cost)}</td></tr></tbody></table>`
       : table(mk.map(k => [esc(k), fmt(mats[k])]));
     const miss = [...new Set(noPrice)];
     document.getElementById("mkt-note").textContent = pc && mk.length
-      ? `Custo ao preço mais baixo do mercado de ${Market.dm(mkt.date)}.` + (mk.some(k => { const m = mkt.find(k); return m && m.made; }) ? " \"Feito\" = o mercado não tem, conta o custo dos materiais da receita (Siderurgia)." : "") + (mk.some(k => { const m = mkt.find(k); return m && m.manual; }) ? " \"À mão\" = preço posto em Preços à mão no site do mercado." : "") + (miss.length ? ` Sem preço: ${miss.join(", ")}, não entra no total.` : "")
+      ? `Custo ao preço mais baixo do mercado de ${Market.dm(mkt.date)}.` + (mk.some(k => { const m = costOf(k); return m && m.made; }) ? " \"Feito\" = o mercado não tem, conta o custo dos materiais da receita (Siderurgia)." : "") + (mk.some(k => { const m = costOf(k); return m && m.manual; }) ? " \"À mão\" = preço posto em Preços à mão no site do mercado." : "") + (miss.length ? ` Sem preço: ${miss.join(", ")}, não entra no total.` : "")
       : "";
     // o que recebes; com preços do mercado, quanto vale
     const vc = valued(); let worth = 0, worthAll = true;

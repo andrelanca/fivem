@@ -89,8 +89,11 @@ e, se o custo estiver completo, quanto ganhas/perdes.
 
 **Minas** (`public/minas/`, pedido 2026-11-20 — não é um craft: entregas e devolvem o remanescente): conversões com perda — entregas 10 lingotes de prata → 7 Prata
 (tiram 30 %), 10 lingotes de cobre → 8 Cobre (20 %), 10 areia → 4 Vidro (60 %). No motor: `out` < 1 por item +
-`roundDown: true` (o que recebes arredonda para baixo). Lingotes/areia não estão no mercado: com preço à mão no
-fivem-market aparece também o Custo e o lucro.
+`roundDown: true` (o que recebes arredonda para baixo). As percentagens estão em **`receitas.js` → `CONVERSOES`**
+(a página lê os `out` daí). Preço dos lingotes/areia = **o que dão** (pedido do André: 10 lingotes de cobre valem o
+mesmo que 8 Cobre): `Market.find("Lingote de cobre")` → 0,8 × mínimo do Cobre, `derived: true`. Coluna "Vale cada"
+com a conta por baixo ("0,8 × 390 €"). Um valor `derived` **não conta como custo** no motor (`costOf`) — não é o que
+pagaste; com preço à mão no fivem-market (o que pagas pelos lingotes) aparece o Custo e o lucro.
 
 **Crafting (acessórios)**: atualiza os preços dos materiais **ao abrir** (`updateFromMarket(true)`) sem mexer nos
 postos à mão (`localStorage` `crafting-mat-manual`); botão **Atualizar do mercado** troca todos. Origem por material

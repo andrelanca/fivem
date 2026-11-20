@@ -5,7 +5,9 @@
 //   - se o mercado tem o material: o mínimo do mercado;
 //   - senão, um preço posto à mão no fivem-market (Análise → Preços à mão; manual: true);
 //   - senão, se há receita em receitas.js (ex.: Aço, feito na Siderurgia): soma dos materiais da receita
-//     (made: true); missing = materiais lá dentro sem preço (não entram na soma).
+//     (made: true); missing = materiais lá dentro sem preço (não entram na soma);
+//   - senão, se é uma conversão das Minas (receitas.js, CONVERSOES): vale o que dá (derived: true),
+//     ex.: 1 lingote de cobre = 0,8 × mínimo do Cobre. Um preço à mão no fivem-market passa à frente.
 window.Market = (function () {
   const API = "https://fivem-market.andrelanca.com/api/prices";
   // compara nomes sem acentos, maiúsculas, plurais nem "de/da/do": "Lingote de ferro" = "Lingote Ferro"
@@ -31,11 +33,19 @@ window.Market = (function () {
         (d.prices || []).forEach(x => { if (x && x.label && x.min > 0) by[norm(x.label)] = x; });
         const R = {};
         Object.entries(window.RECEITAS || {}).forEach(([k, v]) => { R[norm(k)] = v; });
+        const CV = {};
+        Object.entries(window.CONVERSOES || {}).forEach(([k, v]) => { CV[norm(k)] = v; });
         const find = (name, seen) => {
           const k = norm(name), x = by[k];
           if (x) return { label: x.label, min: x.min, date: x.date, made: false, manual: x.source === "manual", missing: [] };
           const r = R[k]; seen = seen || [];
-          if (!r || seen.includes(k)) return null;
+          if (seen.includes(k)) return null;
+          if (!r && CV[k]) {
+            let min = 0; const missing = [];
+            Object.entries(CV[k]).forEach(([m, q]) => { const f = find(m, seen.concat(k)); if (f) min += f.min * q; else missing.push(m); });
+            return min && !missing.length ? { label: name, min, date: d.date, made: false, manual: false, derived: true, missing: [] } : null;
+          }
+          if (!r) return null;
           let min = 0; const missing = [];
           Object.entries(r).forEach(([m, q]) => {
             const f = find(m, seen.concat(k));
